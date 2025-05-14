@@ -1,22 +1,11 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   validation.c                                       :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: thenriqu <thenriqu@student.42porto.com>    +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/05/13 12:48:07 by thenriqu          #+#    #+#             */
-/*   Updated: 2025/05/13 12:57:20 by thenriqu         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
 #include "push_swap.h"
 #include <stdlib.h>
+#include <stddef.h>
 
 static int	are_numbers(char **list)
 {
-	int	i;
-	int	j;
+	size_t	i;
+	size_t	j;
 
 	i = 0;
 	while (list[i])
@@ -35,11 +24,10 @@ static int	are_numbers(char **list)
 	return (1);
 }
 
-
-static int	are_unique_underflow(long *tab, int size)
+static int	are_unique_underflow(long *tab, size_t size)
 {
-	int	i;
-	int	j;
+	size_t	i;
+	size_t	j;
 
 	i = 0;
 	while (i < size)
@@ -56,11 +44,10 @@ static int	are_unique_underflow(long *tab, int size)
 	return (1);
 }
 
-
 int	ft_validate_input(char **list)
 {
 	long	*tab;
-	int		size;
+	size_t	size;
 
 	size = 0;
 	if (!are_numbers(list))
@@ -79,3 +66,18 @@ int	ft_validate_input(char **list)
 	return (1);
 }
 
+int	ft_is_sorted(long *tab, size_t size)
+{
+	size_t	i;
+
+	if (!tab || !size)
+		return (1);
+	i = 0;
+	while (i < size - 1)
+	{
+		if (tab[i] > tab[i + 1])
+			return (0);
+		i++;
+	}
+	return (1);
+}

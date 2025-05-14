@@ -1,15 +1,3 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   blade.c                                            :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: thenriqu <thenriqu@student.42porto.com>    +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/05/13 10:10:48 by thenriqu          #+#    #+#             */
-/*   Updated: 2025/05/13 10:15:23 by thenriqu         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
 #include "push_swap.h"
 #include <stdlib.h>
 
@@ -36,6 +24,7 @@ static char	*make_number(char *s)
 {
 	int		i;
 	char	*n;
+
 	i = 0;
 	while (s[i] && s[i] != ' ')
 		i++;
@@ -104,6 +93,5 @@ char	**ft_split_mod(char *s)
 		arr[i] = NULL;
 		i++;
 	}
-	return (clean_cut(s, arr, size)); 
+	return (clean_cut(s, arr, size));
 }
-

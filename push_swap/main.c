@@ -21,7 +21,7 @@ void	ft_begin_push_swap(char **arg)
 		free(tab);
 }
 
-int main(int argc, char **argv)
+int	main(int argc, char **argv)
 {
 	char	**args;
 	int		i;

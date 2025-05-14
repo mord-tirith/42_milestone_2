@@ -1,28 +1,17 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   push_swap.h                                        :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: thenriqu <thenriqu@student.42porto.com>    +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/05/13 09:52:31 by thenriqu          #+#    #+#             */
-/*   Updated: 2025/05/13 09:55:23 by thenriqu         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
 #ifndef PUSH_SWAP_H
 # define PUSH_SWAP_H
 
 // Includes:
 # include <stddef.h>
 
-typedef struct s_stack{
+typedef struct s_stack
+{
 	int				value;
 	int				cost;
 	struct s_stack	*target;
 	struct s_stack	*next;
 	struct s_stack	*prev;
-} t_stack;
+}	t_stack;
 
 // General math functions
 long	ft_atol(char *s);
@@ -34,7 +23,6 @@ int		ft_is_sorted(long *tab, size_t size);
 char	**ft_split_mod(char *str);
 long	*ft_arg_to_tab(char **arg);
 
-
 // Stack operation functions
 void	ft_st_addback(t_stack **stack, t_stack *new);
 void	ft_st_addfront(t_stack **stack, t_stack *new);
@@ -44,6 +32,4 @@ t_stack	*ft_st_last(t_stack **stack);
 
 // Push swap operations:
 
-
 #endif
-
