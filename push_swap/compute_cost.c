@@ -27,7 +27,7 @@ static void	double_savings(t_stack *node)
 		node->cost = cost + 1;
 }
 
-void	ft_find_cost(t_stack *node)
+static void	find_cost(t_stack *node)
 {
 	size_t	cost;
 
@@ -41,25 +41,25 @@ void	ft_find_cost(t_stack *node)
 	node->cost = cost + 1;
 }
 
-void	ft_update_costs(t_stack **stack)
+static void	update_costs(t_stack **stack)
 {
 	t_stack	*temp;
 
 	temp = *stack;
 	while (temp)
 	{
-		ft_find_cost(temp);
+		find_cost(temp);
 		temp = temp->next;
 	}
 }
 
-t_stack	*ft_find_cheapest(t_stack **a)
+t_stack	*ft_find_cheapest(t_stack **stack)
 {
 	t_stack	*temp;
 	t_stack	*cheapest;
 
-	ft_update_costs(a);
-	temp = *a;
+	update_costs(stack);
+	temp = *stack;
 	cheapest = temp;
 	while (temp)
 	{

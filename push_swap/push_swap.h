@@ -49,8 +49,16 @@ void	rra(t_stack **a);
 void	rrb(t_stack **b);
 void	rrr(t_stack **a, t_stack **b);
 
+// Solver helpers:
+void	ft_cycle_refresh(t_stack **a, t_stack **b);
+void	ft_move_cheapest(t_stack **a, t_stack **b);
+t_stack	*ft_find_cheapest(t_stack **stack);
+
+
 // Solver functions:
 void	ft_deal_three(t_stack **a);
 void	ft_solver(t_stack **a);
+void	ft_smart_sort(t_stack **a);
+
 
 #endif

@@ -42,3 +42,14 @@ void	ft_move_cheapest(t_stack **a, t_stack **b)
 	force_move(a, b, goal);
 	pb(a, b);
 }
+
+void	ft_return_cheapest(t_stack **a, t_stack **b)
+{
+	t_stack *goal;
+
+	goal = ft_find_cheapest(b);
+	if (goal->above_median == goal->target->above_median)
+		paired_move(b, a, goal);
+	force_move(b, a, goal);
+	pa(a, b);
+}
