@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-static void	deal_three(t_stack **a)
+void	ft_deal_three(t_stack **a)
 {
 	int	i;
 	int	j;
@@ -44,11 +44,12 @@ static void	try_initialize(char **args)
 	free(tab);
 	if (size == 3)
 	{
-		deal_three(&a);
+		ft_deal_three(&a);
 		ft_st_clean_stack(&a);
 		return ;
 	}
-	ft_solver(&a);
+	ft_smart_sort(&a);
+	ft_st_clean_stack(&a);
 }
 
 static void	begin_push_swap(char **arg)

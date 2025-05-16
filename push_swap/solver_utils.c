@@ -22,6 +22,8 @@ static void	update_medians(t_stack **stack)
 	size_t	total;
 	t_stack	*temp;
 
+	if (!stack || !*stack)
+		return ;
 	temp = *stack;
 	total = ft_st_last(stack)->index + 1;
 	while (temp)

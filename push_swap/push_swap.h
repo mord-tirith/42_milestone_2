@@ -52,6 +52,7 @@ void	rrr(t_stack **a, t_stack **b);
 // Solver helpers:
 void	ft_cycle_refresh(t_stack **a, t_stack **b);
 void	ft_move_cheapest(t_stack **a, t_stack **b);
+void	ft_return_cheapest(t_stack **a, t_stack **b);
 t_stack	*ft_find_cheapest(t_stack **stack);
 
 
