@@ -27,7 +27,7 @@ BONUS_SRCS_DIR		= src/
 BONUS_SRCS_FILES	= $(addprefix $(BONUS_SRCS_DIR), $(BONUS_SRCS))
 BONUS_OBJS				= $(BONUS_SRCS_FILES:.c=.o)
 
-.PHONY: all true_all clean fclean re banner bonus true_bonus
+.PHONY: all true_all clean fclean re banner bonus true_bonus clean_install
 
 all:
 	@if make -q true_all; then \
@@ -74,6 +74,10 @@ bonus:
 
 true_bonus: $(BONUS_OBJS)
 	@$(CC) $(CFLAGS) $(BONUS_OBJS) -o push_swap_tester
+
+clean_install:
+	@make all
+	@make clean
 
 banner:
 	@echo "${PINK}░       ░░░  ░░░░  ░░░      ░░░  ░░░░  ░░░░░░░░░      ░░░  ░░░░  ░░░      ░░░       ░░";

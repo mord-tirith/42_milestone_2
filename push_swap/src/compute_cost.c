@@ -23,12 +23,10 @@ static int	abs(int n)
 
 void	ft_get_cost(t_stack **a, t_stack **b)
 {
-	t_stack	*temp1;
 	t_stack	*temp2;
 	int		size1;
 	int		size2;
 
-	temp1 = *a;
 	temp2 = *b;
 	size1 = ft_st_len(*a);
 	size2 = ft_st_len(*b);

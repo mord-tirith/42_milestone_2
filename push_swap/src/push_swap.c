@@ -65,7 +65,6 @@ int	main(int argc, char **argv)
 	sort(&a, &b, size);
 	if (argc == 2)
 		free_arg(arg);
-	ft_st_print(&a);
 	ft_st_cleanup(&a);
 	ft_st_cleanup(&b);
 	return (0);
