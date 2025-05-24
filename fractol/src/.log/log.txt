@@ -1,0 +1,239 @@
+=== start of brot.c ===
+
+#include "fractol.h"
+
+
+void	ft_mandelbrot(t_data *data)
+{
+	t_mandel	n;
+	double		scale;
+
+	scale = 4.0 / WIDTH;
+	n.y = 0;
+	while (n.y < HEIGHT)
+	{
+		n.x = 0;
+		while (n.x < WIDTH)
+		{
+			n.real = (n.x * scale - 2.0) + data->x_off;
+			n.imag = (n.y * scale - 2.0) + data->y_off;
+			n.new_r = 0;
+			n.new_i = 0;
+			n.i = 0;
+			while (n.new_r * n.new_r + n.new_i * n.new_i <= 4 && ++n.i < MAX_ITER)
+			{
+				n.old_i = n.new_i;
+				n.old_r = n.new_r;
+				n.new_r = n.old_r * n.old_r - n.old_i * n.old_i + n.real;
+				n.new_i = 2 * n.old_r * n.old_i + n.imag;
+			}
+			n.color = n.i == MAX_ITER ? 0x000000 : (n.i << 24) | 0x0000FF;
+			ft_put_pixel(data, n.x, n.y, n.color);
+			n.x++;
+		}
+		n.y++;
+	}
+}
+=== end of brot.c ===
+=== start of draw_control.c ===
+
+#include "fractol.h"
+
+void	ft_buff_image(t_data *data)
+{
+	data->image.img = mlx_new_image(data->mlx, WIDTH, HEIGHT);
+	data->image.addr = mlx_get_data_addr(
+			data->image.img, &data->image.bpp,
+			&data->image.len, &data->image.endian
+			);
+}
+
+void	ft_put_pixel(t_data *data, int x, int y, int color)
+{
+	int		offset;
+	char	*aim;
+
+	if (x < 0 || x >= WIDTH || y < 0 || y >= HEIGHT)
+		return ;
+	offset = y * data->image.len + x * (data->image.bpp / 8);
+	aim = data->image.addr + offset;
+	*(unsigned int *)aim = color;
+}
+
+int	ft_update_frame(void *param)
+{
+	t_data *data;
+
+	data = (t_data *)param;
+	ft_bzero(data->image.addr, HEIGHT * data->image.len);
+	if (data->draw_func)
+		data->draw_func(data);
+	mlx_put_image_to_window(data->mlx, data->win, data->image.img, 0, 0);
+	return (0);
+}
+
+
+=== end of draw_control.c ===
+=== start of fractol.c ===
+
+#include "fractol.h"
+
+static void	hooks(t_data *data)
+{
+	mlx_loop_hook(data->mlx, ft_update_frame, data);
+	mlx_key_hook(data->win, ft_handle_input, data);
+	mlx_mouse_hook(data->win, ft_handle_mouse, data);
+	mlx_hook(data->win, 17, 0, ft_kill_window, data);
+}
+
+int main(void)
+{
+	t_data	data;
+
+	data.mlx = mlx_init();
+	if (data.mlx)
+		data.win = mlx_new_window(data.mlx, WIDTH, HEIGHT, "Fract.ol");
+	if (!data.mlx)
+		return (1);
+	data.zoom = 1.0;
+	data.x_off = 0.0;
+	data.y_off = 0.0;
+	data.draw_func = ft_mandelbrot;
+	ft_buff_image(&data);
+	hooks(&data);
+	mlx_loop(data.mlx);
+}
+=== end of fractol.c ===
+=== start of fractol.h ===
+
+#ifndef FRACTOL_H
+# define FRACTOL_H
+
+# include "../minilibx-linux/mlx.h"
+# include <unistd.h>
+# include <stdlib.h>
+# include <math.h>
+
+# define WIDTH 800
+# define HEIGHT 800
+# define MAX_ITER 255
+
+typedef struct s_mandel
+{
+	int		x;
+	int		y;
+	int		i;
+	int		color;
+	double	real;
+	double	imag;
+	double	old_r;
+	double	old_i;
+	double	new_r;
+	double	new_i;
+}	t_mandel;
+
+typedef struct s_image
+{
+	void	*img;
+	char	*addr;
+	int		bpp;
+	int		len;
+	int		endian;
+}	t_image;
+
+typedef struct s_data
+{
+	void	*mlx;
+	void	*win;
+	double	zoom;
+	double	x_off;
+	double	y_off;
+	t_image	image;
+	void (*draw_func)(struct s_data *);
+}	t_data;
+
+// Drawing Functions
+int		ft_update_frame(void *param);
+void	ft_buff_image(t_data *data);
+void	ft_put_pixel(t_data *data, int x, int y, int color);
+
+// MLX Helper Functions
+int	ft_kill_window(void *param);
+int	ft_handle_input(int key, void *param);
+int	ft_handle_mouse(int button, int x, int y, void *param);
+
+// Fractal Functions
+void	ft_mandelbrot(t_data *data);
+
+// Minilib Functions
+void	ft_bzero(void *s, size_t n);
+
+#endif
+=== end of fractol.h ===
+=== start of minilib.c ===
+
+#include "fractol.h"
+
+void	ft_bzero(void *s, size_t n)
+{
+	unsigned char	*ret;
+	size_t			i;
+
+	i = 0;
+	ret = (unsigned char *)s;
+	while (i < n)
+		ret[i++] = '\0';
+}
+=== end of minilib.c ===
+=== start of mlx_utils.c ===
+
+#include "fractol.h"
+
+int	ft_kill_window(void *param)
+{
+	t_data	*data;
+
+	data = (t_data *)param;
+	(void)data;
+	exit(0);
+	return (0);
+}
+
+int	ft_handle_mouse(int button, int x, int y, void *param)
+{
+	t_data	*data;
+	double	mouse_r;
+	double	mouse_i;
+
+	data = (t_data *)param;
+	mouse_r = ((double)x / WIDTH - 0.5) * 4.0 / data->zoom + data->x_off;
+	mouse_i = ((double)y / HEIGHT - 0.5) * 4.0 / data->zoom + data->y_off;
+
+	if (button == 4)
+		data->zoom *= 2;
+	else if (button == 5)
+		data->zoom *= 0.5;
+	else
+		return (0);
+	if (data->zoom < 1e-10)
+		data->zoom = 1e-10;
+	if (data->zoom > 1e10)
+		data->zoom = 1e10;
+	data->x_off = mouse_r - ((double)x / WIDTH - 0.5) * 4.0 / data->zoom;
+	data->y_off = mouse_i - ((double)y / HEIGHT - 0.5) * 4.0 / data->zoom;
+	return (0);
+}
+
+int	ft_handle_input(int key, void *param)
+{
+	t_data	*data;
+
+	data = (t_data *)param;
+	(void)data;
+	if (key == 65307)
+	{
+		return (ft_kill_window(param));
+	}
+	return (0);
+}
+=== end of mlx_utils.c ===

@@ -1,6 +1,5 @@
-=== start of draw_control.c ===
 
-#include "fractol.h"
+#include "fdf.h"
 
 void	ft_buff_image(t_data *data)
 {
@@ -20,7 +19,7 @@ void	ft_put_pixel(t_data *data, int x, int y, int color)
 		return ;
 	offset = y * data->image.len + x * (data->image.bpp / 8);
 	aim = data->image.addr + offset;
-	*(unsigned int)aim = color;
+	*(unsigned int *)aim = color;
 }
 
 int	ft_update_frame(void *param)
@@ -32,38 +31,7 @@ int	ft_update_frame(void *param)
 	if (data->draw_func)
 		data->draw_func(data);
 	mlx_put_image_to_window(data->mlx, data->win, data->image.img, 0, 0);
+	return (0);
 }
 
 
-=== end of draw_control.c ===
-=== start of fractol.h ===
-
-#ifndef FRACTOL_H
-# define FRACTOL_H
-
-# include "../minilibx-linux/mlx.h"
-# include <unistd.h>
-# include <stdlib.h>
-# include <math.h>
-
-# define WIDTH 800
-# define HEIGHT 800
-
-typedef struct s_image
-{
-	void	*img;
-	char	*addr;
-	int		bpp;
-	int		len;
-	int		endian;
-}	t_image;
-
-typedef struct s_data
-{
-	void	*mlx;
-	void	*win;
-	t_image	image;
-}	t_data;
-
-#endif
-=== end of fractol.h ===

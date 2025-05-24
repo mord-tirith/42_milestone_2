@@ -1,0 +1,494 @@
+=== start of draw_control.c ===
+
+#include "fdf.h"
+
+void	ft_buff_image(t_data *data)
+{
+	data->image.img = mlx_new_image(data->mlx, WIDTH, HEIGHT);
+	data->image.addr = mlx_get_data_addr(
+			data->image.img, &data->image.bpp,
+			&data->image.len, &data->image.endian
+			);
+}
+
+void	ft_put_pixel(t_data *data, int x, int y, int color)
+{
+	int		offset;
+	char	*aim;
+
+	if (x < 0 || x >= WIDTH || y < 0 || y >= HEIGHT)
+		return ;
+	offset = y * data->image.len + x * (data->image.bpp / 8);
+	aim = data->image.addr + offset;
+	*(unsigned int *)aim = color;
+}
+
+int	ft_update_frame(void *param)
+{
+	t_data *data;
+
+	data = (t_data *)param;
+	ft_bzero(data->image.addr, HEIGHT * data->image.len);
+	if (data->draw_func)
+		data->draw_func(data);
+	mlx_put_image_to_window(data->mlx, data->win, data->image.img, 0, 0);
+	return (0);
+}
+
+
+=== end of draw_control.c ===
+=== start of fdf.h ===
+
+#ifndef FDF_H
+# define FDF_H
+
+// Includes:
+# include "../libft/inc/libftpp.h"
+# include "../minilibx-linux/mlx.h"
+
+// Marcros:
+# ifndef WIDTH
+#  define WIDTH 800
+# endif
+
+# ifndef HEIGHT
+#  define HEIGHT 800
+# endif
+
+# define TO_RAD 0.017453292519943295
+
+// Structures:
+typedef struct s_point
+{
+	int	x;
+	int	y;
+	int	z;
+} t_point;
+
+typedef struct s_map
+{
+	int width;
+	int	height;
+	t_point **points;
+} t_map;
+
+typedef struct s_image
+{
+	void	*img;
+	char	*addr;
+	int		bpp;
+	int		len;
+	int		endian;
+}	t_image;
+
+typedef struct s_data
+{
+	void	*mlx;
+	void	*win;
+	void	(*draw_func)(struct s_data *);
+	t_map	*map;
+	t_image	image;
+}	t_data;
+
+typedef struct s_bresenham
+{
+	int	delta_x;
+	int	delta_y;
+	int	dir_x;
+	int	dir_y;
+	int	err;
+	int	x;
+	int	y;
+}	t_bresenham;
+
+// Parse Functions:
+int		ft_valid_map(char *file_name);
+int		ft_get_height(char *arg);
+t_map	*ft_fd_to_map(char *arg);
+
+// Drawing Functions:
+int		ft_update_frame(void *param);
+void	ft_put_pixel(t_data *data, int x, int y, int color);
+void	ft_buff_image(t_data *data);
+void	draw_map(t_data *data);
+t_point	ft_project_point(t_point p, int deg);
+
+
+#endif
+=== end of fdf.h ===
+=== start of painter.c ===
+
+#include "fdf.h"
+#include <math.h>
+
+static void	boot_line(t_point start, t_point end, t_bresenham *line)
+{
+	int	t1;
+	int	t2;
+
+	line->delta_x = end.x - start.x;
+	line->delta_y = end.y - start.y;
+	line->err = line->delta_x - line->delta_y;
+	t1 = start.x;
+	t2 = end.x;
+	line->dir_x = 1 * ((t1 <= t2) - (t1 > t2));
+	t1 = start.y;
+	t2 = end.y;
+	line->dir_y = 1 * ((t1 <= t2) - (t1 > t2));
+	line->x = start.x;
+	line->y = start.y;
+}
+
+void	ft_draw_line(t_data *data, t_point a, t_point b, int color)
+{
+	t_bresenham	line;
+	int			error;
+
+	boot_line(a, b, &line);
+	while (1)
+	{
+		ft_put_pixel(data, line.x, line.y, color);
+		if (line.x == b.x && line.y == b.y)
+			break ;
+		error = 2 * line.err;
+		if (error > (-line.delta_y))
+		{
+			line.err -= line.delta_y;
+			line.x += line.dir_x;
+		}
+		if (error < line.delta_x)
+		{
+			line.err += line.delta_x;
+			line.y += line.dir_y;
+		}
+	}
+}
+
+static int	get_color(int z)
+{
+	// simple gradient: low (blue) → high (white)
+	int base = 0x0000FF;
+	int shade = (z * 255) /  (/* choose a max Z, e.g. */  100);
+	if (shade > 255) shade = 255;
+	return (base | (shade << 16) /* red channel */);
+}
+
+void	draw_map(t_data *data)
+{
+	int      x, y;
+	t_point  p0, p1, r0, r1;
+	int      color;
+
+	y = 0;
+	while (y < data->map->height)
+	{
+		x = 0;
+		while (x < data->map->width)
+		{
+			// original grid point
+			p0 = data->map->points[y][x];
+			// project to screen coords
+			r0 = ft_project_point(p0, 45 /* degrees, for example */);
+			// pick a color based on height
+			color = get_color(p0.z);
+
+			// horizontal neighbor
+			if (x + 1 < data->map->width)
+			{
+				p1 = data->map->points[y][x + 1];
+				r1 = ft_project_point(p1, 45);
+				ft_draw_line(data, r0, r1, color);
+			}
+
+			// vertical neighbor
+			if (y + 1 < data->map->height)
+			{
+				p1 = data->map->points[y + 1][x];
+				r1 = ft_project_point(p1, 45);
+				ft_draw_line(data, r0, r1, color);
+			}
+
+			x++;
+		}
+		y++;
+	}
+}
+
+=== end of painter.c ===
+=== start of parser.c ===
+
+#include "fdf.h"
+#include <stdlib.h>
+#include <fcntl.h>
+
+static int	safe_demap(t_map *map, int *tab)
+{
+	int		i;
+
+	i = 0;
+	while (map->points && map->points[i])
+	{
+		free(map->points[i]);
+		i++;
+	}
+	if (map->points)
+		free(map->points);
+	if (tab)
+		free(tab);
+	free(map);
+	return (0);
+}
+
+static char	**gnl_split(int fd)
+{
+	char	*line;
+	char	**split_line;
+
+	split_line = NULL;
+	line = get_next_line(fd);
+	if (line)
+		split_line = ft_split(line, ' ');
+	if (line)
+		free(line);
+	return (split_line);
+}
+
+static int	*map_line_maker(int fd, int width)
+{
+	char	**line;
+	int		*tab;
+	int		i;
+
+	i = 0;
+	line = gnl_split(fd);
+	if (!line)
+		return (NULL);
+	tab = malloc(sizeof(int) * width);
+	if (!tab)
+	{
+		free(line);
+		return (NULL);
+	}
+	while (line[i])
+	{
+		tab[i] = ft_atoi(line[i]);
+		free(line[i]);
+		i++;
+	}
+	free(line);
+	return (tab);
+}
+
+static int	map_maker(t_map *map, int fd)
+{
+	int	*tab;
+	int	x;
+	int	y;
+
+	y = 0;
+	while (y < map->height)
+	{
+		x = 0;
+		tab = map_line_maker(fd, map->width);
+		if (!tab)
+			return (safe_demap(map, NULL));
+		map->points[y] = malloc(sizeof(t_point) * map->width);
+		if (!map->points[y])
+			return (safe_demap(map, tab));
+		while (x < map->width)
+		{
+			map->points[y][x].x = x;
+			map->points[y][x].y = y;
+			map->points[y][x].z = tab[x];
+			x++;
+		}
+		y++;
+		free(tab);
+	}
+	return (1);
+}
+
+t_map	*ft_fd_to_map(char *arg)
+{
+	t_map	*map;
+	int		fd;
+
+	if (ft_valid_map(arg) == -1)
+		return (NULL);
+	map = malloc(sizeof(t_map));
+	if (!map)
+		return (NULL);
+	map->width = ft_valid_map(arg);
+	map->height = ft_get_height(arg);
+	map->points = ft_calloc(map->height, sizeof(t_point *));
+	if (!map->points)
+	{
+		safe_demap(map, NULL);
+		return (NULL);
+	}
+	fd = open(arg, O_RDONLY);
+	if (fd < 0 || !(map_maker(map, fd)))
+	{
+		safe_demap(map, NULL);
+		close(fd);
+		return (NULL);
+	}
+	close(fd);
+	return (map);
+}
+=== end of parser.c ===
+=== start of projector.c ===
+
+#include "fdf.h"
+#include <math.h>
+
+t_point	ft_project_point(t_point p, int deg)
+{
+	float	rad;
+	t_point	ret;
+
+	rad = deg * TO_RAD;
+	ret.x = (int)((p.x - p.y) * cos(rad));
+	ret.y = (int)((p.x + p.y) * sin(rad) - p.z);
+	return (ret);
+}
+=== end of projector.c ===
+=== start of validation.c ===
+
+#include "fdf.h"
+#include <stdlib.h>
+#include <fcntl.h>
+
+static int	valid_input(char *line)
+{
+	int	i;
+
+	i = 0;
+	while (line[i])
+	{
+		if (line[i] == '+' || line[i] == '-')
+		{
+			if (line[i + 1] < '0' || line[i + 1] > '9')
+				return (0);
+			if (i && line[i - 1] != ' ')
+				return (0);
+		}
+		else if ((line[i] < '0' || line[i] > '9') && line[i] != ' ')
+			return (0);
+		i++;
+	}
+	return (1);
+}
+
+static int	count_nums(char *line)
+{
+	int	count;
+	int	i;
+
+	i = 0;
+	count = 0;
+	if (!valid_input(line))
+		return (-1);
+	while (line[i])
+	{
+		while (line[i] == ' ')
+			i++;
+		if (line[i])
+			count++;
+		while (line[i] && line[i] != ' ')
+			i++;
+	}
+	if (!count)
+		return (-1);
+	return (count);
+}
+
+int	ft_valid_map(char *file_name)
+{
+	char	*temp;
+	int		width;
+	int		fd;
+
+	width = 0;
+	fd = open(file_name, O_RDONLY);
+	temp = get_next_line(fd);
+	if (!temp)
+	{
+		close(fd);
+		return (-1);
+	}
+	width = count_nums(temp);
+	while (temp)
+	{
+		if (count_nums(temp) != width)
+			width = -1;
+		free(temp);
+		temp = get_next_line(fd);
+	}
+	close(fd);
+	return (width);
+}
+
+int ft_get_height(char *arg)
+{
+	char	*line;
+	int		fd;
+	int		height;
+
+	fd = open(arg, O_RDONLY);
+	height = 1;
+	line = get_next_line(fd);
+	while (line)
+	{
+		free(line);
+		line = get_next_line(fd);
+		if (line)
+			height++;
+	}
+	close(fd);
+	return (height);
+}
+=== end of validation.c ===
+=== start of wireframe.c ===
+#include "fdf.h"
+#include <stdlib.h>
+
+int  main(int argc, char **argv)
+{
+    t_data  data;
+
+    if (argc != 2)
+        return (1);
+
+    /* 1. Load your map */
+    data.map = ft_fd_to_map(argv[1]);
+    if (!data.map->points)
+        return (2);  // failed to parse map
+
+    /* 2. Initialize MLX */
+    data.mlx = mlx_init();
+    if (!data.mlx)
+        return (3);
+
+    data.win = mlx_new_window(data.mlx, WIDTH, HEIGHT, "FDF");
+    if (!data.win)
+        return (4);
+
+    /* 3. Prepare your off-screen image buffer */
+    ft_buff_image(&data);
+
+    /* 4. Set the drawing function (your wireframe routine) */
+    data.draw_func = draw_map;  // implement this to project + draw lines
+
+    /* 5. Hook your per-frame update */
+    mlx_loop_hook(data.mlx, ft_update_frame, &data);
+
+    /* 6. Enter MLX’s event loop */
+    mlx_loop(data.mlx);
+
+    /* Cleanup would go here, but mlx_loop never returns */
+    return (0);
+}
+
+
+=== end of wireframe.c ===

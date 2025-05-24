@@ -19,7 +19,7 @@ void	ft_put_pixel(t_data *data, int x, int y, int color)
 		return ;
 	offset = y * data->image.len + x * (data->image.bpp / 8);
 	aim = data->image.addr + offset;
-	*(unsigned int)aim = color;
+	*(unsigned int *)aim = color;
 }
 
 int	ft_update_frame(void *param)
@@ -31,6 +31,7 @@ int	ft_update_frame(void *param)
 	if (data->draw_func)
 		data->draw_func(data);
 	mlx_put_image_to_window(data->mlx, data->win, data->image.img, 0, 0);
+	return (0);
 }
 
 

@@ -13,7 +13,7 @@ INC_DIR = inc/
 MLX_DIR = minilibx-linux/
 
 # File Variables:
-SRC_FILES	= main.c basic.c medium.c minilib.c
+SRC_FILES	= brot.c draw_control.c fractol.c minilib.c mlx_utils.c
 SRC				= $(addprefix $(SRC_DIR), $(SRC_FILES))
 OBJ				= $(SRC:.c=.o)
 
@@ -48,4 +48,6 @@ fclean: clean
 
 re: fclean all
 
-.PHONY: all clean fclean re
+clean_all: all clean
+
+.PHONY: all clean fclean re clean_all
