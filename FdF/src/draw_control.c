@@ -27,7 +27,9 @@ int	ft_update_frame(void *param)
 	t_data *data;
 
 	data = (t_data *)param;
+	ft_put_pixel(data, WIDTH/2, HEIGHT/2, 0xFF0000);
 	ft_bzero(data->image.addr, HEIGHT * data->image.len);
+    ft_put_pixel(data, WIDTH/2, HEIGHT/2, 0xFF0000);
 	if (data->draw_func)
 		data->draw_func(data);
 	mlx_put_image_to_window(data->mlx, data->win, data->image.img, 0, 0);
