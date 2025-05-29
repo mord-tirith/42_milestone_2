@@ -1,21 +1,42 @@
-#include <stdio.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <signal.h>
+#include "server_side.h"
 
-void sighandler(int);
+void	decode_signal(int signal)
+{
+	static unsigned char	current;
+	static int				bit;
 
-int main () {
-   signal(SIGINT, sighandler);
-
-   while(1) {
-      printf("Going to sleep for a second...\n");
-      sleep(1); 
-   }
-   return(0);
+	current <<= 1;
+	if (signal == 1)
+		current |= 1;
+	bit++;
+	if (bit == 8)
+	{
+		ft_printf("%c", current);
+		current = 0;
+		bit = 0;
+	}
 }
 
-void sighandler(int signum) {
-   printf("Caught signal %d, coming out...\n", signum);
-   exit(1);
+void bit_putchar(char c)
+{
+	int	i;
+
+	i = 7;
+	while (i >= 0)
+	{
+		decode_signal(c >> i & 1);
+		i--;
+	}
+}
+
+int main()
+{
+	char *a = "This is so stupid but it works!";
+
+	while (*a)
+	{
+		bit_putchar(*a);
+		a++;
+	}
+	return (0);
 }
