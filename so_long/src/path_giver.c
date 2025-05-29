@@ -13,23 +13,23 @@ static char	*finish_file(int i)
 static char	*start_direction(t_dir dir)
 {
 	if (dir == DIR_UP)
-		return ("up_00");
+		return ("up");
 	else if (dir == DIR_RIGHT)
-		return ("right_00");
+		return ("right");
 	else if (dir == DIR_DOWN)
-		return ("down_00");
+		return ("down");
 	else
-		return ("left_00");
+		return ("left");
 }
 
 static char	*complete_path(char model)
 {
 	if (model == 'i')
-		return ("idle/192/idlex192_");
+		return ("idling_");
 	else if (model == 'w')
-			return ("walk/192/walkx192_");
+			return ("walking_");
 	else
-			return ("death/192/deathx192_");
+			return ("dying_");
 }
 
 char	*ft_give_frame(char model, t_dir dir, int frame, int entity)

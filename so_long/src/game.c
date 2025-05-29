@@ -4,7 +4,6 @@
 
 static t_game	*boot_game(void *mlx, void *win)
 {
-	int		failstate;
 	t_game	*game;
 	t_point	spawn;
 
@@ -15,7 +14,7 @@ static t_game	*boot_game(void *mlx, void *win)
 		return (NULL);
 	game->mlx = mlx;
 	game->win = win;
-	failstate = ft_boot_player(game, spawn);
+	ft_boot_player(game, spawn);
 	return (game);
 }
 
