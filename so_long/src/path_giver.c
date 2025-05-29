@@ -1,5 +1,4 @@
 #include "so_long.h"
-#include "so_long_paths.h"
 
 static char	*finish_file(int i)
 {
@@ -35,12 +34,18 @@ static char	*complete_path(char model)
 
 char	*ft_give_frame(char model, t_dir dir, int frame, int entity)
 {
-	static char	frame_path[256];
+	char	*frame_path;
 
-	ft_bzero(frame_path, 256);
+
+	frame_path = ft_calloc(sizeof(char), 256);
+	if (!frame_path)
+		return (NULL);
 	if ((model != 'i' && model != 'w' && model != 'd') ||
 		frame < 0 || frame > 9)
-		return ("../assets/entity/failure.xpm");
+	{
+		ft_strlcat(frame_path, ERROR_ASSET, 256);
+		return (frame_path);
+	}
 	if (entity == 0)
 		ft_strlcat(frame_path, PLAYER, 256);
 	else
