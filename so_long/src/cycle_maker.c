@@ -85,7 +85,10 @@ t_cycle	*ft_load_cycle(char model, int entity, t_dir dir, void *mlx)
 	if (!i || !new_cycle)
 		return (NULL);
 	new_cycle->frame_count = i;
-	new_cycle->frame_delay = 2000;
+	if (model == 'i')
+		new_cycle->frame_delay = 60;
+	else
+		new_cycle->frame_delay = 0;
 	new_cycle->delay_count = 0;
 	new_cycle->frame = 0;
 	new_cycle->dir = dir;

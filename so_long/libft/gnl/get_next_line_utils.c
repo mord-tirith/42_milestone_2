@@ -12,7 +12,7 @@
 
 #include "get_next_line.h"
 
-char	*ft_strchr(const char *str, int chr)
+char	*ft_stchr(const char *str, int chr)
 {
 	while (*str)
 	{
@@ -38,8 +38,8 @@ char	*ft_join_free(char *s1, char *s2)
 			return (NULL);
 		s1[0] = 0;
 	}
-	i = ft_strchr(s1, '\0') - s1;
-	result = malloc((i + (ft_strchr(s2, '\0') - s2) + 1) * sizeof(char));
+	i = ft_stchr(s1, '\0') - s1;
+	result = malloc((i + (ft_stchr(s2, '\0') - s2) + 1) * sizeof(char));
 	if (result)
 	{
 		i = -1;
@@ -87,14 +87,14 @@ char	*ft_handle_line(char *buffer, char *new_line)
 	new_line = ft_join_free(new_line, buffer);
 	if (!new_line)
 		return (NULL);
-	if (!ft_strchr(new_line, '\n'))
+	if (!ft_stchr(new_line, '\n'))
 	{
 		ft_carriage(buffer, BUFFER_SIZE);
 		return (new_line);
 	}
-	nli = ft_strchr(new_line, '\n') - new_line;
+	nli = ft_stchr(new_line, '\n') - new_line;
 	new_line[nli + 1] = '\0';
-	nli = ft_strchr(buffer, '\n') - buffer;
+	nli = ft_stchr(buffer, '\n') - buffer;
 	ft_carriage(buffer, nli + 1);
 	return (new_line);
 }
@@ -114,7 +114,7 @@ char	*ft_main_loop(char *buffer, char *new_line, int fd, ssize_t *bytes)
 		if (*bytes == 0)
 			break ;
 		buffer[*bytes] = '\0';
-		if (ft_strchr(buffer, '\n'))
+		if (ft_stchr(buffer, '\n'))
 			return (ft_handle_line(buffer, new_line));
 		new_line = ft_join_free(new_line, buffer);
 		ft_carriage(buffer, BUFFER_SIZE);

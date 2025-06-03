@@ -23,7 +23,7 @@
 
 char	*get_next_line(int fd);
 
-char	*ft_strchr(const char *str, int chr);
+char	*ft_stchr(const char *str, int chr);
 char	*ft_join_free(char *s1, char *s2);
 char	*ft_handle_line(char *buffer, char *new_line);
 char	*ft_main_loop(char *buffer, char *new_line, int fd, ssize_t *bytes);

@@ -45,9 +45,13 @@ typedef struct s_point
 typedef struct s_being
 {
 	int		frame;
+	int		animation_c;
+	int		animation_t;
 	t_dir	dir;
 	t_state	state;
 	t_point	position;
+	t_point	origin;
+	t_point	offset;
 	t_cycle	*idle[4];
 	t_cycle	*walk[4];
 	t_cycle	*dead[4];
@@ -55,9 +59,12 @@ typedef struct s_being
 
 typedef struct s_map
 {
-	int			width;
-	int			height;
-	char		**grid;
+	int		width;
+	int		height;
+	char	**grid;
+	char	**render_grid;
+	void	*map_floor[4];
+	void	*map_walls[8];
 	t_image	bg;
 	t_image	walls;
 }	t_map;

@@ -22,7 +22,7 @@ char	*get_next_line(int fd)
 	if (fd < 0)
 		return (NULL);
 	bytes = 1;
-	if (buffer[0] && ft_strchr(buffer, '\n'))
+	if (buffer[0] && ft_stchr(buffer, '\n'))
 		return (ft_handle_line(buffer, line));
 	else if (buffer[0])
 		line = ft_handle_line(buffer, line);

@@ -5,10 +5,7 @@
 /*	Path Macros:	*/
 # define PLAYER "assets/player/"
 # define ENEMY "assets/enemy/"
-# define BACKG "assets/map/background/"
-# define WALLS "assets/map/wall/"
-# define EXIT "assets/map/exit/";
-# define COIN "assets/map/coin/";
+# define MAP "assets/map/"
 # define ERROR_ASSET "assets/entity/null.xpm"
 
 /*	System Specific Variables:	*/

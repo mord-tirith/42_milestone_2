@@ -1,0 +1,994 @@
+=== start of cycle_maker.c ===
+#include "so_long.h"
+#include "types.h"
+#include <stdlib.h>
+
+static int	count_frames(char model)
+{
+	if (model == 'w')
+		return (8);
+	else if (model == 'i')
+		return (6);
+	else if (model == 'd')
+		return (10);
+	ft_printf("ERROR: invalid model %c passed for sprite sheet\n", model);
+	return (0);
+}
+
+static t_image	*make_frame(void *mlx, t_dir dir, int ent, char mod, int i)
+{
+	char	*path;
+	t_image	*new_sprite;
+
+	path = ft_give_frame(mod, dir, i, ent);
+	if (!path)
+		return (NULL);
+	new_sprite = malloc(sizeof(t_image));
+	if (!new_sprite)
+	{
+		free(path);
+		return (NULL);
+	}
+	new_sprite->img = mlx_xpm_file_to_image(
+	mlx, path, &new_sprite->width, &new_sprite->height);
+	free(path);
+	if (!new_sprite->img)
+	{
+		free(new_sprite);
+		return (NULL);
+	}
+	return (new_sprite);
+}
+
+static void	destroy_images(void *mlx, t_image **sheet, int size)
+{
+	int	i;
+
+	i = 0;
+	while (i < size)
+	{
+		if (sheet[i]->img)
+			mlx_destroy_image(mlx, sheet[i]->img);
+		free(sheet[i]);
+		i++;
+	}
+	free(sheet);
+}
+
+static int	make_sprites(t_cycle *cycle, void *mlx, int ent, char mod)
+{
+	int	i;
+
+	cycle->sprites = malloc(sizeof(t_image *) * cycle->frame_count);
+	if (!cycle->sprites)
+		return (0);
+	i = 0;
+	while (i < cycle->frame_count)
+	{
+		cycle->sprites[i] = make_frame(mlx, cycle->dir, ent, mod, i);
+		if (!cycle->sprites[i])
+		{
+			destroy_images(mlx, cycle->sprites, i);
+			return (0);
+		}
+		i++;
+	}
+	return (1);
+}
+
+t_cycle	*ft_load_cycle(char model, int entity, t_dir dir, void *mlx)
+{
+	t_cycle	*new_cycle;
+	int		i;
+
+	i = count_frames(model);
+	new_cycle = malloc(sizeof(t_cycle));
+	if (!i || !new_cycle)
+		return (NULL);
+	new_cycle->frame_count = i;
+	if (model == 'i')
+		new_cycle->frame_delay = 2000;
+	else
+		new_cycle->frame_delay = 1000;
+	new_cycle->delay_count = 0;
+	new_cycle->frame = 0;
+	new_cycle->dir = dir;
+	if (!make_sprites(new_cycle, mlx, entity, model))
+	{
+		free(new_cycle);
+		return (NULL);
+	}
+	new_cycle->frame = 0;
+	return (new_cycle);
+}
+=== end of cycle_maker.c ===
+=== start of flood_fill.c ===
+#include "so_long.h"
+#include "types.h"
+#include <stdlib.h>
+
+static int	count_coins(char **map_arr)
+{
+	int	total;
+	int	i;
+	int	j;
+
+	total = 0;
+	i = 0;
+	while (map_arr[i])
+	{
+		j = 0;
+		while (map_arr[i][j])
+		{
+			if (map_arr[i][j] == 'C')
+				total++;
+			j++;
+		}
+		i++;
+	}
+	return (total);
+}
+
+static void	flood_coins(char **grid, t_map map, int y, int x, int *coins)
+{
+	if (x < 0 || y < 0 || x >= map.width || y >= map.height ||
+		grid[y][x] == '1' || grid[y][x] == 'E' || grid[y][x] == 'X')
+		return ;
+	if (grid[y][x] == 'C')
+		(*coins)--;
+	grid[y][x] = 'X';
+	flood_coins(grid, map, y - 1, x, coins);
+	flood_coins(grid, map, y + 1, x, coins);
+	flood_coins(grid, map, y, x - 1, coins);
+	flood_coins(grid, map, y, x + 1, coins);
+}
+
+static int	flood_exit(char **grid, t_map map, int y, int x)
+{
+	int	i;
+
+	if (x < 0 || y < 0 || x >= map.width || y >= map.height ||
+		grid[y][x] == '1' || grid[y][x] == 'V')
+		return (0);
+	if (grid[y][x] == 'E')
+		return (1);
+	grid[y][x] = 'V';
+	i = 0;
+	i += flood_exit(grid, map, y - 1, x);
+	i += flood_exit(grid, map, y + 1, x);
+	i += flood_exit(grid, map, y, x - 1);
+	i += flood_exit(grid, map, y, x + 1);
+	return (i);
+}
+
+char	**make_grid(t_map map)
+{
+	int		i;
+	char	**grid;
+
+	grid = ft_calloc(map.height + 1, sizeof(char *));
+	if (!grid)
+		return (NULL);
+	i = -1;
+	while (map.grid[++i])
+	{
+		grid[i] = ft_strdup(map.grid[i]);
+		if (!grid[i])
+		{
+			while (--i)
+				free(grid[i]);
+			free(grid);
+			return (NULL);
+		}
+	}
+	return (grid);
+}
+
+static int	safe_return(char **to_del, int i, int val)
+{
+	while (--i >= 0)
+		free(to_del[i]);
+	free(to_del);
+	return (val);
+}
+
+int	ft_flood_fill(t_game *game)
+{
+	int		total_coins;
+	char	**grid;
+	t_point	start;
+
+	start = game->player.position;
+	grid = make_grid(game->map);
+	if (!grid)
+		return (0);
+	total_coins = count_coins(grid);
+	if (!total_coins)
+		return (safe_return(grid, game->map.height, 0));
+	flood_coins(grid, game->map, start.y, start.x, &total_coins);
+	if (total_coins)
+		return (safe_return(grid, game->map.height, 0));
+	if (flood_exit(grid, game->map, start.y, start.x))
+		return (safe_return(grid, game->map.height, 1));
+	return (safe_return(grid, game->map.height, 0));
+}
+=== end of flood_fill.c ===
+=== start of game.c ===
+#include "macros.h"
+#include "so_long.h"
+#include "types.h"
+
+static t_point	*locate_spawn(char **map_grid)
+{
+	int		x;
+	int		y;
+	t_point	*spawn_point;
+
+	x = 0;
+	y = 0;
+	while (!ft_strchr(map_grid[y], 'P'))
+		y++;
+	while (map_grid[y][x] != 'P')
+		x++;
+	spawn_point = malloc(sizeof(t_point));
+	if (!spawn_point)
+		return (NULL);
+	spawn_point->x = x;
+	spawn_point->y = y;
+	return (spawn_point);
+}
+
+static t_game	*boot_game(void *mlx, char *map)
+{
+	t_game	*game;
+
+	game = malloc(sizeof(t_game));
+	if (!game)
+		return (NULL);
+	game->mlx = mlx;
+	game->map = *ft_create_map(map);
+	game->win = mlx_new_window(mlx, game->map.width * 64, game->map.height * 64, "Blobbing");
+	ft_remake_walls(&game->map);
+	ft_remake_floor(&game->map);
+	ft_draw_map(game);
+	ft_boot_player(game, *locate_spawn(game->map.grid));
+	return (game);
+}
+
+int	main(int ac, char **av)
+{
+	void	*mlx;
+	t_game	*game;
+
+	if (ac != 2 || !ft_valid_map(av[1]))
+		return (1);
+
+	mlx = mlx_init();
+	game = boot_game(mlx, av[1]);
+
+	if (!ft_flood_fill(game))
+		exit(1);
+	mlx_loop_hook(mlx, ft_game_loop, game);
+	mlx_key_hook(game->win, ft_key_hook, game);
+	mlx_loop(mlx);
+	return (0);
+}
+=== end of game.c ===
+=== start of input_control.c ===
+
+#include "macros.h"
+#include "so_long.h"
+
+
+static void	handle_move(int key, t_being *p)
+{
+	if (key == W_KEY)
+	{
+		p->dir = DIR_UP;
+		p->position.y -= 1;
+	}
+	else if (key == A_KEY)
+	{
+		p->dir = DIR_LEFT;
+		p->position.x -= 1;
+	}
+	else if (key == S_KEY)
+	{
+		p->dir = DIR_DOWN;
+		p->position.y += 1;
+	}
+	else
+	{
+		p->dir = DIR_RIGHT;
+		p->position.x += 1;
+	}
+}
+
+int	ft_key_hook(int key, t_game *game)
+{
+	if (key == ESC_KEY)
+		exit(0);
+	if (game->player.state == MOVING)
+		return (0);
+	if (key == W_KEY || key == A_KEY ||
+		key == S_KEY || key == D_KEY)
+	{
+		game->player.origin = game->player.position;
+		handle_move(key, &game->player);
+		game->player.animation_c = 0;
+		game->player.animation_t = 10000;
+		game->player.state = MOVING;
+		game->player.walk[game->player.dir]->frame = 0;
+		game->player.walk[game->player.dir]->delay_count = 0;
+	}
+	return (0);
+}
+=== end of input_control.c ===
+=== start of looper.c ===
+#include "so_long.h"
+#include "types.h"
+
+static float ease(float raw)
+{
+	float slow_end;
+
+	slow_end = 1 - raw;
+	return (1 - slow_end * slow_end * slow_end);
+}
+
+static void	animate_move(t_being *player, t_cycle *cycle)
+{
+	int		delta_x;
+	int		delta_y;
+	float	progress;
+
+	cycle = player->walk[player->dir];
+	player->animation_c++;
+	progress = ease((float)player->animation_c / player->animation_t);
+	delta_x = player->position.x - player->origin.x;
+	delta_y = player->position.y - player->origin.y;
+	player->offset.x = (int)((1.0f - progress) * (-delta_x) * 64);
+	player->offset.y = (int)((1.0f - progress) * (-delta_y) * 64);
+	if (player->animation_c >= player->animation_t)
+	{
+		player->offset.x = 0;
+		player->offset.y = 0;
+		player->state = IDLING;
+		//player->idle[player->dir]->frame_count = 0;
+	}
+}
+
+int	ft_game_loop(t_game *game)
+{
+	t_being *p = &game->player;
+	t_cycle *cycle;
+
+	mlx_clear_window(game->mlx, game->win);
+	if (p->state == MOVING)
+	{
+		cycle = p->walk[p->dir];
+		animate_move(p, cycle);
+	}
+	else
+		cycle = p->idle[p->dir];
+	cycle->delay_count++;
+	if (cycle->delay_count >= cycle->frame_delay)
+	{
+		cycle->delay_count = 0;
+		cycle->frame = (cycle->frame + 1) % cycle->frame_count;
+	}
+	ft_draw_map(game);
+	ft_draw_player(game);
+	return (0);
+}
+=== end of looper.c ===
+=== start of macros.h ===
+#ifndef MACROS_H
+# define MACROS_H
+
+
+/*	Path Macros:	*/
+# define PLAYER "assets/player/"
+# define ENEMY "assets/enemy/"
+# define MAP "assets/map/"
+# define ERROR_ASSET "assets/entity/null.xpm"
+
+/*	System Specific Variables:	*/
+# ifdef __linux__
+#  define ESC_KEY	65307
+#  define W_KEY		119
+#  define A_KEY		97
+#  define S_KEY		115
+#  define D_KEY		100
+#  define INSTANCE	1
+# elif __APPLE__
+#  define ESC_KEY	53
+#  define W_KEY		13
+#  define A_KEY		0
+#  define S_KEY		1
+#  define D_KEY		2
+#  define INSTANCE	0
+# endif
+
+/*	Window Macros:	*/
+# ifndef WIDTH
+#  define WIDTH 800
+# endif
+# ifndef HEIGHT
+#  define HEIGHT 600
+# endif
+
+#endif
+=== end of macros.h ===
+=== start of map_boot.c ===
+
+#include "so_long.h"
+#include "types.h"
+
+static void	load_floor(void *target[4], void *mlx)
+{
+	int	t;
+
+	target[0] = mlx_xpm_file_to_image(mlx, "./assets/map/floor0.xpm",&t, &t);
+	target[1] = mlx_xpm_file_to_image(mlx, "./assets/map/floor1.xpm",&t, &t);
+	target[2] = mlx_xpm_file_to_image(mlx, "./assets/map/floor2.xpm",&t, &t);
+	target[3] = mlx_xpm_file_to_image(mlx, "./assets/map/floor3.xpm",&t, &t);
+}
+
+static void	load_walls(void *target[8], void *mlx)
+{
+	int	t;
+
+	target[0] = mlx_xpm_file_to_image(mlx, "./assets/map/wall_A.xpm",&t, &t);
+	target[1] = mlx_xpm_file_to_image(mlx, "./assets/map/wall_B.xpm",&t, &t);
+	target[2] = mlx_xpm_file_to_image(mlx, "./assets/map/wall_C.xpm",&t, &t);
+	target[3] = mlx_xpm_file_to_image(mlx, "./assets/map/wall_D.xpm",&t, &t);
+	target[4] = mlx_xpm_file_to_image(mlx, "./assets/map/wall_E.xpm",&t, &t);
+}
+
+void	ft_load_map_assets(t_game *game)
+{
+	t_map	*map;
+
+	if (!game)
+		return ;
+	map = &game->map;
+	load_floor(map->map_floor, game->mlx);
+	load_walls(map->map_walls, game->mlx);
+}
+=== end of map_boot.c ===
+=== start of map_draw.c ===
+
+#include "so_long.h"
+
+static void	*get_image_for_tile(t_map *map, char tile)
+{
+	if (tile >= '0' && tile <= '3')
+		return (map->map_floor[tile - '0']);
+	else if (tile >= 'A' && tile <= 'E')
+		return (map->map_walls[tile - 'A']);
+	else
+		return (map->map_floor[0]);
+}
+
+void	ft_draw_map(t_game *game)
+{
+	int		x;
+	int		y;
+	void	*tile;
+
+	y = 0;
+	while (y < game->map.height)
+	{
+		x = 0;
+		while (x < game->map.width)
+		{
+			tile = get_image_for_tile(&game->map, game->map.grid[y][x]);
+			if (tile)
+				mlx_put_image_to_window(game->mlx, game->win, tile, x * 32, y * 32);
+			x++;
+		}
+		y++;
+	}
+}
+=== end of map_draw.c ===
+=== start of map_maker.c ===
+#include "so_long.h"
+#include "types.h"
+#include <fcntl.h>
+
+static char	**give_rows(int fd, int *row_count, int *col_count)
+{
+	int		size;
+	char	*current_row;
+	char	**whole_map;
+
+	current_row = get_next_line(fd);
+	*col_count = ft_strlen(current_row);
+	size = 0;
+	while (current_row)
+	{
+		size++;
+		free(current_row);
+		current_row = get_next_line(fd);
+	}
+	*row_count = size;
+	whole_map = ft_calloc(sizeof(char *), size + 1);
+	if (!whole_map)
+		return (NULL);
+	return (whole_map);
+}
+
+static t_map	*finish_map(char *path, t_map *map)
+{
+	int		i;
+	int		fd;
+	char	*new_row;
+
+	fd = open(path, O_RDONLY);
+	i = 0;
+	while (i < map->height)
+	{
+		new_row = get_next_line(fd);
+		if (new_row && new_row[ft_strlen(new_row) - 1] == '\n')
+			new_row[ft_strlen(new_row) - 1] = '\0';
+		map->grid[i] = new_row;
+		i++;
+	}
+	close(fd);
+	return (map);
+}
+
+t_map	*ft_create_map(char *map_path)
+{
+	int		fd;
+	int		rows;
+	int		cols;
+	t_map	*new_map;
+
+	fd = open(map_path, O_RDONLY);
+	new_map = malloc(sizeof(t_map));
+	if (!new_map)
+		return (NULL);
+	new_map->grid = give_rows(fd, &rows, &cols);
+	if (!new_map->grid)
+	{
+		free(new_map);
+		return (NULL);
+	}
+	new_map->height = rows;
+	new_map->width = cols;
+	close(fd);
+	return (finish_map(map_path, new_map));
+}
+=== end of map_maker.c ===
+=== start of map_parser.c ===
+#include "so_long.h"
+#include <fcntl.h>
+#include <stddef.h>
+#include <stdio.h>
+#include <unistd.h>
+
+static int	locate_uniques(char *row, int *p, int *e)
+{
+	char	*new_p;
+	char	*new_e;
+
+	new_p = ft_strchr(row, 'P');
+	new_e = ft_strchr(row, 'E');
+	if (new_p && *p)
+		return (0);
+	if (new_e && *e)
+		return (0);
+	if (new_p)
+		*p = 1;
+	if (new_e)
+		*e = 1;
+	return (1);
+}
+
+static int	valid_dimensions(int fd)
+{
+	char	*row;
+	size_t	size;
+
+	row = get_next_line(fd);
+	if (!row)
+		return (0);
+	size = ft_strlen(row);
+	while (row)
+	{
+		if (ft_strlen(row) != size || row[0] != '1' || 
+			(row[size - 1] == '\n' && row[size - 2] != '1') || 
+			(row[size - 1] != '\n' && row[size - 1] != '1'))
+		{
+			free(row);
+			return (0);
+		}
+		free(row);
+		row = get_next_line(fd);
+	}
+	return (1);
+}
+
+static int	is_legal(int fd)
+{
+	int		found_player;
+	int		found_exit;
+	char	*current_row;
+
+	found_player = 0;
+	found_exit = 0;
+	current_row = get_next_line(fd);
+	while (current_row)
+	{
+		if (!locate_uniques(current_row, &found_player, &found_exit))
+		{
+			free(current_row);
+			return (0);
+		}
+		free(current_row);
+		current_row = get_next_line(fd);
+	}
+	if (!found_player || !found_exit)
+		return (0);
+	return (1);
+}
+
+static int	closing_time(int fd, int state)
+{
+	close(fd);
+	return (state);
+}
+
+int	ft_valid_map(char *map_file)
+{
+	int		fd;
+
+	fd = open(map_file, O_RDONLY);
+	if (!valid_dimensions(fd))
+		return (closing_time(fd, 0));
+	close(fd);
+	fd = open(map_file, O_RDONLY);
+	return (closing_time(fd, is_legal(fd)));
+}
+=== end of map_parser.c ===
+=== start of map_utils.c ===
+
+#include "so_long.h"
+
+void	ft_remake_walls(t_map *map)
+{
+	int	x;
+	int	y;
+
+	y = 0;
+	while (y < map->height)
+	{
+		x = -1;
+		while (++x < map->width)
+		{
+			if (map->grid[y][x] == '1')
+			{
+				if (x == 0)
+					map->grid[y][x] = 'B';
+				else if (x == map->width - 1)
+					map->grid[y][x] = 'C';
+				else if (y == 0)
+					map->grid[y][x] = 'A';
+				else if (y == map->height - 1)
+					map->grid[y][x] = 'D';
+				else
+					map->grid[y][x] = 'E';
+			}
+		}
+		y++;
+	}
+}
+
+void	ft_remake_floor(t_map *map)
+{
+	int		x;
+	int		y;
+	char	to_add;
+
+	y = 0;
+	to_add = 0;
+	while (y < map->height)
+	{
+		x = 0;
+		while (x < map->width)
+		{
+			if (map->grid[y][x] == '0')
+			{
+				to_add += map->grid[y][x - 1];
+				to_add += map->grid[y][x + 1];
+				to_add += map->grid[y - 1][x];
+				to_add += map->grid[y + 1][x];
+				map->grid[y][x] = '0' + (to_add % 4);
+			}
+			x++;
+		}
+		y++;
+	}
+}
+
+int	ft_isfloor(char tile)
+{
+	if (tile >= '0' && tile <= '3')
+		return (1);
+	return (0);
+}
+
+int	ft_iswall(char tile)
+{
+	if (tile >= 'A' && tile <= 'J')
+		return (1);
+	return (0);
+}
+
+int	ft_ispecial(char tile)
+{
+	if (tile == 'p' || tile == 'c' || tile == 'e')
+		return (1);
+	return (0);
+}
+=== end of map_utils.c ===
+=== start of path_giver.c ===
+#include "so_long.h"
+
+static char	*finish_file(int i)
+{
+	static char	path[6];
+
+	ft_bzero(path, 6);
+	ft_strlcpy(path, "X.xpm", 6);
+	path[0] = i + '0';
+	return (path);
+}
+
+static char	*start_direction(t_dir dir)
+{
+	if (dir == DIR_UP)
+		return ("up");
+	else if (dir == DIR_RIGHT)
+		return ("right");
+	else if (dir == DIR_DOWN)
+		return ("down");
+	else
+		return ("left");
+}
+
+static char	*complete_path(char model)
+{
+	if (model == 'i')
+		return ("idling_");
+	else if (model == 'w')
+			return ("walking_");
+	else
+			return ("dying_");
+}
+
+char	*ft_give_frame(char model, t_dir dir, int frame, int entity)
+{
+	char	*frame_path;
+
+
+	frame_path = ft_calloc(sizeof(char), 256);
+	if (!frame_path)
+		return (NULL);
+	if ((model != 'i' && model != 'w' && model != 'd') ||
+		frame < 0 || frame > 9)
+	{
+		ft_strlcat(frame_path, ERROR_ASSET, 256);
+		return (frame_path);
+	}
+	if (entity == 0)
+		ft_strlcat(frame_path, PLAYER, 256);
+	else
+		ft_strlcat(frame_path, ENEMY, 256);
+	ft_strlcat(frame_path, complete_path(model), 256);
+	ft_strlcat(frame_path, start_direction(dir), 256);
+	ft_strlcat(frame_path, finish_file(frame), 256);
+	return (frame_path);
+}
+=== end of path_giver.c ===
+=== start of player_boot.c ===
+#include "so_long.h"
+#include "types.h"
+
+static int	boot_cycles(void *mlx, t_being *p)
+{
+	p->idle[0] = ft_load_cycle('i', 0, DIR_UP, mlx);
+	p->idle[1] = ft_load_cycle('i', 0, DIR_LEFT, mlx);
+	p->idle[2] = ft_load_cycle('i', 0, DIR_DOWN, mlx);
+	p->idle[3] = ft_load_cycle('i', 0, DIR_RIGHT, mlx);
+	if (!p->idle[0] || !p->idle[1] || !p->idle[2] || !p->idle[3])
+		return (0);
+	p->walk[0] = ft_load_cycle('w', 0, DIR_UP, mlx);
+	p->walk[1] = ft_load_cycle('w', 0, DIR_LEFT, mlx);
+	p->walk[2] = ft_load_cycle('w', 0, DIR_DOWN, mlx);
+	p->walk[3] = ft_load_cycle('w', 0, DIR_RIGHT, mlx);
+	if (!p->walk[0] || !p->walk[1] || !p->walk[2] || !p->walk[3])
+		return (0);
+	p->dead[0] = ft_load_cycle('d', 0, DIR_UP, mlx);
+	p->dead[1] = ft_load_cycle('d', 0, DIR_LEFT, mlx);
+	p->dead[2] = ft_load_cycle('d', 0, DIR_DOWN, mlx);
+	p->dead[3] = ft_load_cycle('d', 0, DIR_RIGHT, mlx);
+	if (!p->dead[0] || !p->dead[1] || !p->dead[2] || !p->dead[3])
+		return (0);
+	return (1);
+}
+
+int	ft_boot_player(t_game *game, t_point spawn)
+{
+	int		x;
+	t_being	*p;
+
+	p = &game->player;
+	p->state = IDLING;
+	p->position = spawn;
+	p->frame = 0;
+	p->dir = DIR_DOWN;
+	x = boot_cycles(game->mlx, p);
+	if (!x)
+		return (0);
+	return (1);
+}
+=== end of player_boot.c ===
+=== start of player_draw.c ===
+#include "so_long.h"
+#include "types.h"
+
+void	ft_draw_player(t_game *game)
+{
+	t_cycle	*current_cycle;
+	t_image	*img;
+
+	if (game->player.state == IDLING)
+		current_cycle = game->player.idle[game->player.dir];
+	else if (game->player.state == MOVING)
+		current_cycle = game->player.walk[game->player.dir];
+	else
+		current_cycle = game->player.dead[game->player.dir];
+	img = current_cycle->sprites[current_cycle->frame]->img;
+	mlx_put_image_to_window(game->mlx, game->win, img,
+		game->player.position.x * 64 + game->player.offset.x,
+		game->player.position.y * 64 + game->player.offset.y);
+	if (current_cycle->frame == current_cycle->frame_count)
+		current_cycle->frame = 0;
+}
+=== end of player_draw.c ===
+=== start of so_long.h ===
+
+#ifndef SO_LONG_H
+# define SO_LONG_H
+
+/*	Includes:	*/
+//	Libs:
+# include "../libft/inc/libftpp.h"
+
+//	Sublibs:
+# include "macros.h"
+# include "types.h"
+
+// System dependent libs:
+# ifdef __linux__
+#  include "../minilibx-linux/mlx.h"
+# elif __APPLE__
+#  include "../minilibx-linux/mlx.h"
+# endif
+
+/*	Functions:	*/
+//	Boot functions:
+int		ft_boot_player(t_game *game, t_point spawn);
+char	*ft_give_frame(char model, t_dir dir, int frame, int entity);
+t_map	*ft_create_map(char *map_path);
+t_cycle	*ft_load_cycle(char model, int entity, t_dir dir, void *mlx);
+
+//	Draw functions:
+void	ft_draw_player(t_game *game);
+
+//	Loop functions:
+int	ft_game_loop(t_game *game);
+
+//	Input functions:
+int	ft_key_hook(int key, t_game *game);
+
+//	Validation functions:
+int	ft_valid_map(char *map_file);
+int	ft_flood_fill(t_game *game);
+
+//	Map utility functions:
+int		ft_isfloor(char tile);
+int		ft_iswall(char tile);
+int		ft_ispecial(char tile);
+void	ft_draw_map(t_game *game);
+void	ft_remake_walls(t_map *map);
+void	ft_remake_floor(t_map *map);
+#endif
+=== end of so_long.h ===
+=== start of types.h ===
+#ifndef TYPES_H
+# define TYPES_H
+
+/*	Enums:	*/
+typedef enum e_state
+{
+	IDLING,
+	MOVING,
+	DYING
+}	t_state;
+
+typedef enum e_dir
+{
+	DIR_UP,
+	DIR_LEFT,
+	DIR_DOWN,
+	DIR_RIGHT
+}	t_dir;
+
+/*	Structures:  */
+typedef struct s_image
+{
+	int		width;
+	int		height;
+	void	*img;
+}	t_image;
+
+typedef struct s_cycle
+{
+	int		frame;
+	int		frame_count;
+	int		frame_delay;
+	int		delay_count;
+	char	**frames;
+	t_dir	dir;
+	t_image	**sprites;
+}	t_cycle;
+
+typedef struct s_point
+{
+	int	x;
+	int	y;
+}	t_point;
+
+typedef struct s_being
+{
+	int		frame;
+	int		animation_c;
+	int		animation_t;
+	t_dir	dir;
+	t_state	state;
+	t_point	position;
+	t_point	origin;
+	t_point	offset;
+	t_cycle	*idle[4];
+	t_cycle	*walk[4];
+	t_cycle	*dead[4];
+}	t_being;
+
+typedef struct s_map
+{
+	int		width;
+	int		height;
+	char	**grid;
+	char	**render_grid;
+	void	*map_floor[4];
+	void	*map_walls[8];
+	t_image	bg;
+	t_image	walls;
+}	t_map;
+
+typedef struct s_game
+{
+	int			tick;
+	void		*mlx;
+	void		*win;
+	t_map		map;
+	t_being	player;
+	t_being	*enemies;
+}	t_game;
+
+#endif
+=== end of types.h ===

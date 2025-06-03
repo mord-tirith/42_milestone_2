@@ -12,7 +12,8 @@ INC_DIR = inc/
 MLX_DIR = minilibx-linux/
 
 # File Variables:
-SRC_FILES	= cycle_maker.c game.c input_control.c looper.c path_giver.c player_boot.c \
+SRC_FILES	= cycle_maker.c flood_fill.c game.c input_control.c looper.c map_boot.c \
+						map_draw.c map_maker.c map_parser.c map_utils.c path_giver.c player_boot.c \
 						player_draw.c
 SRC				= $(addprefix $(SRC_DIR), $(SRC_FILES))
 OBJ				= $(SRC:.c=.o)
