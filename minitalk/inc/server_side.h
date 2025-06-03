@@ -5,5 +5,7 @@
 /*	Includes:	*/
 
 # include "../libft/inc/libftpp.h"
+# include <unistd.h>
+# include <signal.h>
 
 #endif
