@@ -26,7 +26,7 @@ static void	sort(t_stack **a, t_stack **b, int size)
 		ft_st_sort(a, b);
 }
 
-static void	free_arg(char **args)
+void	ft_free_arg(char **args)
 {
 	int	i;
 	int	j;
@@ -67,14 +67,14 @@ int	main(int argc, char **argv)
 	else
 		arg = argv + 1;
 	if (!arg || !ft_validate(arg))
-		ft_error_handler(NULL, NULL);
-	a = ft_kickoff_a(arg);
+		ft_error_handler(NULL, NULL, NULL, 0);
+	a = ft_kickoff_a(arg, argc);
 	b = NULL;
 	size = ft_st_len(a);
 	ft_index_stack(a, size + 1);
 	sort(&a, &b, size);
 	if (argc == 2)
-		free_arg(arg);
+		ft_free_arg(arg);
 	ft_st_cleanup(&a);
 	ft_st_cleanup(&b);
 	return (0);

@@ -45,8 +45,9 @@ t_stack	*ft_st_second_last(t_stack *s);
 
 // Pre-sort utils:
 int		ft_validate(char **args);
-void	ft_error_handler(t_stack **a, t_stack **b);
-t_stack	*ft_kickoff_a(char **v);
+void	ft_error_handler(t_stack **a, t_stack **b, char **arg, int c);
+void	ft_free_arg(char **args);
+t_stack	*ft_kickoff_a(char **v, int argc);
 
 // Algorithm:
 void	ft_deal_three(t_stack **a);

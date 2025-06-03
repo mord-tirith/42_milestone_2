@@ -27,12 +27,14 @@ void	ft_st_cleanup(t_stack **stack)
 	}
 }
 
-void	ft_error_handler(t_stack **a, t_stack **b)
+void	ft_error_handler(t_stack **a, t_stack **b, char **arg, int c)
 {
 	if (a && *a)
 		ft_st_cleanup(a);
 	if (b && *b)
 		ft_st_cleanup(b);
+	if (c == 2)
+		ft_free_arg(arg);
 	ft_printf("Error\n");
 	exit(1);
 }

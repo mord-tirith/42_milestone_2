@@ -14,7 +14,27 @@
 #include <limits.h>
 #include <stdlib.h>
 
-t_stack	*ft_kickoff_a(char **v)
+static int	build_a(t_stack **a, int n, int i)
+{
+	t_stack	*temp;
+
+	if (i == 0)
+	{
+		*a = ft_st_new(n);
+		if (!*a)
+			return (0);
+	}
+	else
+	{
+		temp = ft_st_new(n);
+		if (!temp)
+			return (0);
+		ft_st_add(a, temp);
+	}
+	return (1);
+}
+
+t_stack	*ft_kickoff_a(char **v, int argc)
 {
 	t_stack	*a;
 	long	n;
@@ -31,11 +51,9 @@ t_stack	*ft_kickoff_a(char **v)
 	{
 		n = ft_atol(v[i]);
 		if (n > INT_MAX || n < INT_MIN)
-			ft_error_handler(&a, NULL);
-		if (i == 0)
-			a = ft_st_new((int)n);
-		else
-			ft_st_add(&a, ft_st_new((int)n));
+			ft_error_handler(&a, NULL, v, argc);
+		if (!build_a(&a, (int)n, i))
+			ft_error_handler(&a, NULL, v, argc);
 		i++;
 	}
 	return (a);

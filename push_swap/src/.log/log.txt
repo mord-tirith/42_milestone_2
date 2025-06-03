@@ -1,0 +1,935 @@
+=== start of boot.c ===
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   boot.c                                             :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: thenriqu <thenriqu@student.42porto.com>    +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2025/05/20 12:40:32 by thenriqu          #+#    #+#             */
+/*   Updated: 2025/05/20 13:13:12 by thenriqu         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
+#include "../inc/push_swap.h"
+#include <limits.h>
+#include <stdlib.h>
+
+t_stack	*ft_kickoff_a(char **v)
+{
+	t_stack	*a;
+	long	n;
+	int		i;
+	int		c;
+
+	c = 0;
+	while (v[c])
+		c++;
+	a = NULL;
+	n = 0;
+	i = 0;
+	while (i < c)
+	{
+		n = ft_atol(v[i]);
+		if (n > INT_MAX || n < INT_MIN)
+			ft_error_handler(&a, NULL);
+		if (i == 0)
+			a = ft_st_new((int)n);
+		else
+			ft_st_add(&a, ft_st_new((int)n));
+		i++;
+	}
+	return (a);
+}
+
+void	ft_index_stack(t_stack *stack, int size)
+{
+	t_stack	*temp;
+	t_stack	*end;
+	int		val;
+
+	while (--size > 0)
+	{
+		temp = stack;
+		val = INT_MIN;
+		end = NULL;
+		while (temp)
+		{
+			if (temp->value == INT_MIN && !temp->index)
+				temp->index = 1;
+			if (temp->value > val && !temp->index)
+			{
+				val = temp->value;
+				end = temp;
+				temp = stack;
+			}
+			else
+				temp = temp->next;
+		}
+		if (end)
+			end->index = size;
+	}
+}
+=== end of boot.c ===
+=== start of brains.c ===
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   brains.c                                           :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: thenriqu <thenriqu@student.42porto.com>    +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2025/05/20 14:13:41 by thenriqu          #+#    #+#             */
+/*   Updated: 2025/05/20 14:18:32 by thenriqu         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
+#include "../inc/push_swap.h"
+
+static void	push_phase(t_stack **a, t_stack **b)
+{
+	int	size;
+	int	pushed;
+	int	i;
+
+	size = ft_st_len(*a);
+	pushed = 0;
+	i = 0;
+	while (size > 6 && i < size && pushed < size / 2)
+	{
+		if ((*a)->index <= size / 2)
+		{
+			pb(a, b);
+			pushed++;
+		}
+		else
+			ra(a);
+		i++;
+	}
+	while (size - pushed > 3)
+	{
+		pb(a, b);
+		pushed++;
+	}
+}
+
+static void	shift_phase(t_stack **a)
+{
+	int	lowest;
+	int	size;
+
+	size = ft_st_len(*a);
+	lowest = ft_st_lowest(a);
+	if (lowest > size / 2)
+	{
+		while (lowest < size)
+		{
+			rra(a);
+			lowest++;
+		}
+	}
+	else
+	{
+		while (lowest > 0)
+		{
+			ra(a);
+			lowest--;
+		}
+	}
+}
+
+static int	st_highest(t_stack *s)
+{
+	int	i;
+
+	i = s->index;
+	while (s)
+	{
+		if (s->index > i)
+			i = s->index;
+		s = s->next;
+	}
+	return (i);
+}
+
+void	ft_deal_three(t_stack **a)
+{
+	int	end;
+
+	if (ft_st_sorted(*a))
+		return ;
+	end = st_highest(*a);
+	if ((*a)->index == end)
+		ra(a);
+	else if ((*a)->next->index == end)
+		rra(a);
+	if ((*a)->index > (*a)->next->index)
+		sa(a);
+}
+
+void	ft_st_sort(t_stack **a, t_stack **b)
+{
+	push_phase(a, b);
+	ft_deal_three(a);
+	while (*b)
+	{
+		ft_st_update_targets(a, b);
+		ft_get_cost(a, b);
+		ft_move_cheapest(a, b);
+	}
+	if (!ft_st_sorted(*a))
+		shift_phase(a);
+}
+=== end of brains.c ===
+=== start of compute_cost.c ===
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   compute_cost.c                                     :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: thenriqu <thenriqu@student.42porto.com>    +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2025/05/20 13:54:29 by thenriqu          #+#    #+#             */
+/*   Updated: 2025/05/20 14:03:43 by thenriqu         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
+#include "../inc/push_swap.h"
+#include <limits.h>
+
+static int	abs(int n)
+{
+	if (n < 0)
+		return (-n);
+	else
+		return (n);
+}
+
+void	ft_get_cost(t_stack **a, t_stack **b)
+{
+	t_stack	*temp2;
+	int		size1;
+	int		size2;
+
+	temp2 = *b;
+	size1 = ft_st_len(*a);
+	size2 = ft_st_len(*b);
+	while (temp2)
+	{
+		temp2->cost_b = temp2->pos;
+		if (temp2->pos > size2 / 2)
+			temp2->cost_b = (size2 - temp2->pos) * -1;
+		temp2->cost_a = temp2->target_pos;
+		if (temp2->target_pos > size1 / 2)
+			temp2->cost_a = (size1 - temp2->target_pos) * -1;
+		temp2 = temp2->next;
+	}
+}
+
+void	ft_move_cheapest(t_stack **a, t_stack **b)
+{
+	t_stack	*temp;
+	int		goal;
+	int		cost_a;
+	int		cost_b;
+
+	temp = *b;
+	goal = INT_MAX;
+	while (temp)
+	{
+		if (abs(temp->cost_a) + abs(temp->cost_b) < abs(goal))
+		{
+			goal = abs(temp->cost_a) + abs(temp->cost_b);
+			cost_a = temp->cost_a;
+			cost_b = temp->cost_b;
+		}
+		temp = temp->next;
+	}
+	ft_clever_mover(a, b, cost_a, cost_b);
+}
+=== end of compute_cost.c ===
+=== start of error.c ===
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   error.c                                            :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: thenriqu <thenriqu@student.42porto.com>    +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2025/05/20 14:37:39 by thenriqu          #+#    #+#             */
+/*   Updated: 2025/05/20 14:38:15 by thenriqu         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
+#include "../inc/push_swap.h"
+#include <stdlib.h>
+
+void	ft_st_cleanup(t_stack **stack)
+{
+	t_stack	*temp;
+
+	if (!stack || !*stack)
+		return ;
+	while (*stack)
+	{
+		temp = (*stack)->next;
+		free(*stack);
+		*stack = temp;
+	}
+}
+
+void	ft_error_handler(t_stack **a, t_stack **b)
+{
+	if (a && *a)
+		ft_st_cleanup(a);
+	if (b && *b)
+		ft_st_cleanup(b);
+	ft_printf("Error\n");
+	exit(1);
+}
+=== end of error.c ===
+=== start of minilib_1.c ===
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   minilib_1.c                                        :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: thenriqu <thenriqu@student.42porto.com>    +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2025/05/20 14:42:07 by thenriqu          #+#    #+#             */
+/*   Updated: 2025/05/20 14:45:31 by thenriqu         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
+#include "../inc/push_swap.h"
+#include <unistd.h>
+#include <limits.h>
+
+void	ft_printf(char *str)
+{
+	int	i;
+
+	i = 0;
+	while (str[i])
+		i++;
+	write(1, str, i);
+}
+
+void	ft_print_num(int value)
+{
+	if (value == INT_MIN)
+		return (ft_printf("-2147483648"));
+	if (value < 0)
+	{
+		ft_printf("-");
+		value = -value;
+	}
+	if (value >= 10)
+		ft_print_num(value / 10);
+	write(1, &"0123456789"[value % 10], 1);
+}
+
+long	ft_atol(char *str)
+{
+	long	n;
+	int		s;
+
+	n = 0;
+	s = 1;
+	while ((*str >= 9 && *str <= 13) || *str == ' ')
+		str++;
+	if (*str == '+' || *str == '-')
+	{
+		if (*str == '-')
+			s = -1;
+		str++;
+	}
+	while (*str >= '0' && *str <= '9')
+	{
+		n = (n * 10) + (*str - '0');
+		str++;
+	}
+	return (n * s);
+}
+=== end of minilib_1.c ===
+=== start of minilib_2.c ===
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   minilib_2.c                                        :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: thenriqu <thenriqu@student.42porto.com>    +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2025/05/18 12:26:53 by thenriqu          #+#    #+#             */
+/*   Updated: 2025/05/20 17:20:25 by thenriqu         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
+#include <stdlib.h>
+
+static int	count(char *s)
+{
+	size_t	i;
+	int		c;
+
+	i = 0;
+	c = 0;
+	while (s[i])
+	{
+		while ((s[i] >= 9 && s[i] <= 13) || s[i] == ' ')
+			i++;
+		if (s[i])
+			c++;
+		while (s[i] && !((s[i] >= 9 && s[i] <= 13) || s[i] == ' '))
+			i++;
+	}
+	return (c);
+}
+
+static char	*make_word(char *s)
+{
+	size_t	i;
+	char	*ns;
+
+	i = 0;
+	while ((*s >= 9 && *s <= 13) || *s == ' ')
+		s++;
+	while (s[i] && ((s[i] < 9 || s[i] > 13) && s[i] != ' '))
+		i++;
+	ns = malloc(i + 1);
+	if (!ns)
+		return (NULL);
+	i = 0;
+	while (s[i] && ((s[i] < 9 || s[i] > 13) && s[i] != ' '))
+	{
+		ns[i] = s[i];
+		i++;
+	}
+	ns[i] = 0;
+	return (ns);
+}
+
+static char	**cleanup(char **tab, int j)
+{
+	int	i;
+
+	i = 0;
+	while (i < j)
+	{
+		if (tab[i])
+			free(tab[i]);
+		i++;
+	}
+	free(tab);
+	return (NULL);
+}
+
+char	**ft_split(char *str)
+{
+	int		c;
+	int		i;
+	char	**res;
+
+	c = count(str);
+	res = malloc(sizeof(char *) * (c + 1));
+	if (!res)
+		return (NULL);
+	res[c] = NULL;
+	i = 0;
+	while (i < c)
+	{
+		res[i] = make_word(str);
+		if (!res[i])
+			return (cleanup(res, i));
+		i++;
+		while (!((*str >= 9 && *str <= 13) || *str == ' ') && *str)
+			str++;
+		while ((*str >= 9 && *str <= 13) || *str == ' ')
+			str++;
+	}
+	return (res);
+}
+=== end of minilib_2.c ===
+=== start of more_stack_utils.c ===
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   more_stack_utils.c                                 :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: thenriqu <thenriqu@student.42porto.com>    +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2025/05/20 15:08:27 by thenriqu          #+#    #+#             */
+/*   Updated: 2025/05/20 15:12:01 by thenriqu         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
+#include "../inc/push_swap.h"
+
+void	ft_st_add(t_stack **stack, t_stack *to_add)
+{
+	t_stack	*end;
+
+	if (!to_add)
+		return ;
+	if (!*stack)
+	{
+		*stack = to_add;
+		return ;
+	}
+	end = ft_st_last(*stack);
+	end->next = to_add;
+}
+
+int	ft_st_len(t_stack *stack)
+{
+	int	i;
+
+	i = 0;
+	while (stack)
+	{
+		stack = stack->next;
+		i++;
+	}
+	return (i);
+}
+=== end of more_stack_utils.c ===
+=== start of mover.c ===
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   mover.c                                            :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: thenriqu <thenriqu@student.42porto.com>    +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2025/05/20 14:04:04 by thenriqu          #+#    #+#             */
+/*   Updated: 2025/05/20 14:11:19 by thenriqu         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
+#include "../inc/push_swap.h"
+
+static void	rev_both(t_stack **a, t_stack **b, int *ca, int *cb)
+{
+	while (*ca < 0 && *cb < 0)
+	{
+		(*ca)++;
+		(*cb)++;
+		rrr(a, b);
+	}
+}
+
+static void	rotate_both(t_stack **a, t_stack **b, int *ca, int *cb)
+{
+	while (*ca > 0 && *cb > 0)
+	{
+		(*ca)--;
+		(*cb)--;
+		rr(a, b);
+	}
+}
+
+static void	iter_ra(t_stack **a, int *ca)
+{
+	while (*ca)
+	{
+		if (*ca > 0)
+		{
+			ra(a);
+			(*ca)--;
+		}
+		else
+		{
+			rra(a);
+			(*ca)++;
+		}
+	}
+}
+
+static void	iter_rb(t_stack **b, int *cb)
+{
+	while (*cb)
+	{
+		if (*cb > 0)
+		{
+			rb(b);
+			(*cb)--;
+		}
+		else
+		{
+			rrb(b);
+			(*cb)++;
+		}
+	}
+}
+
+void	ft_clever_mover(t_stack **a, t_stack **b, int ca, int cb)
+{
+	if (ca < 0 && cb < 0)
+		rev_both(a, b, &ca, &cb);
+	else if (ca > 0 && cb > 0)
+		rotate_both(a, b, &ca, &cb);
+	iter_ra(a, &ca);
+	iter_rb(b, &cb);
+	pa(a, b);
+}
+=== end of mover.c ===
+=== start of push_swap.c ===
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   push_swap.c                                        :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: thenriqu <thenriqu@student.42porto.com>    +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2025/05/20 12:24:24 by thenriqu          #+#    #+#             */
+/*   Updated: 2025/05/20 12:38:03 by thenriqu         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
+#include "../inc/push_swap.h"
+#include <stdlib.h>
+
+static void	sort(t_stack **a, t_stack **b, int size)
+{
+	int	sorted;
+
+	sorted = ft_st_sorted(*a);
+	if ((size == 2) && !sorted)
+		sa(a);
+	else if (size == 3)
+		ft_deal_three(a);
+	else if (!sorted)
+		ft_st_sort(a, b);
+}
+
+static void	free_arg(char **args)
+{
+	int	i;
+	int	j;
+
+	i = 0;
+	while (args[i])
+		i++;
+	j = 0;
+	while (j < i)
+	{
+		free(args[j]);
+		j++;
+	}
+	free(args);
+}
+
+static char	**safe_split(char *arg)
+{
+	char	**split_args;
+
+	split_args = ft_split(arg);
+	if (!split_args)
+		return (NULL);
+	return (split_args);
+}
+
+int	main(int argc, char **argv)
+{
+	t_stack	*a;
+	t_stack	*b;
+	char	**arg;
+	int		size;
+
+	if (argc < 2)
+		return (0);
+	if (argc == 2)
+		arg = safe_split(argv[1]);
+	else
+		arg = argv + 1;
+	if (!arg || !ft_validate(arg))
+		ft_error_handler(NULL, NULL);
+	a = ft_kickoff_a(arg);
+	b = NULL;
+	size = ft_st_len(a);
+	ft_index_stack(a, size + 1);
+	sort(&a, &b, size);
+	if (argc == 2)
+		free_arg(arg);
+	ft_st_cleanup(&a);
+	ft_st_cleanup(&b);
+	return (0);
+}
+=== end of push_swap.c ===
+=== start of stack_utils.c ===
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   stack_utils.c                                      :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: thenriqu <thenriqu@student.42porto.com>    +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2025/05/20 12:38:22 by thenriqu          #+#    #+#             */
+/*   Updated: 2025/05/20 12:39:55 by thenriqu         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
+#include "../inc/push_swap.h"
+#include <stdlib.h>
+
+int	ft_st_sorted(t_stack *stack)
+{
+	while (stack->next != NULL)
+	{
+		if (stack->value > stack->next->value)
+			return (0);
+		stack = stack->next;
+	}
+	return (1);
+}
+
+t_stack	*ft_st_last(t_stack *s)
+{
+	while (s && s->next)
+		s = s->next;
+	return (s);
+}
+
+t_stack	*ft_st_second_last(t_stack *s)
+{
+	while (s && s->next && s->next->next)
+		s = s->next;
+	return (s);
+}
+
+t_stack	*ft_st_new(int value)
+{
+	t_stack	*new;
+
+	new = malloc(sizeof(t_stack));
+	if (!new)
+		return (NULL);
+	new->value = value;
+	new->index = 0;
+	new->pos = -1;
+	new->target_pos = -1;
+	new->cost_a = -1;
+	new->cost_b = -1;
+	new->next = NULL;
+	return (new);
+}
+
+void	ft_st_print(t_stack **stack)
+{
+	t_stack	*temp;
+	int		i;
+
+	i = 0;
+	temp = *stack;
+	while (temp)
+	{
+		if (i)
+			ft_printf(" ");
+		ft_print_num(temp->value);
+		temp = temp->next;
+		if (!i)
+			i = 1;
+	}
+}
+=== end of stack_utils.c ===
+=== start of updater.c ===
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   updater.c                                          :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: thenriqu <thenriqu@student.42porto.com>    +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2025/05/20 13:30:31 by thenriqu          #+#    #+#             */
+/*   Updated: 2025/05/20 13:54:24 by thenriqu         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
+#include "../inc/push_swap.h"
+#include <limits.h>
+#include <stdint.h>
+
+static void	update_pos(t_stack **s)
+{
+	t_stack	*temp;
+	int		i;
+
+	temp = *s;
+	i = 0;
+	while (temp)
+	{
+		temp->pos = i;
+		temp = temp->next;
+		i++;
+	}
+}
+
+static int	find_target(t_stack **a, int i, int target_i, int target_pos)
+{
+	t_stack	*temp;
+
+	temp = *a;
+	while (temp)
+	{
+		if (temp->index > i && temp->index < target_i)
+		{
+			target_i = temp->index;
+			target_pos = temp->pos;
+		}
+		temp = temp->next;
+	}
+	if (target_i != INT_MAX)
+		return (target_pos);
+	temp = *a;
+	while (temp)
+	{
+		if (temp->index < target_i)
+		{
+			target_i = temp->index;
+			target_pos = temp->pos;
+		}
+		temp = temp->next;
+	}
+	return (target_pos);
+}
+
+void	ft_st_update_targets(t_stack **a, t_stack **b)
+{
+	t_stack	*temp;
+	int		target_pos;
+
+	temp = *b;
+	update_pos(a);
+	update_pos(b);
+	target_pos = 0;
+	while (temp)
+	{
+		target_pos = find_target(a, temp->index, INT_MAX, target_pos);
+		temp->target_pos = target_pos;
+		temp = temp->next;
+		target_pos = 0;
+	}
+}
+
+int	ft_st_lowest(t_stack **s)
+{
+	t_stack	*temp;
+	int		i;
+	int		pos;
+
+	temp = *s;
+	i = INT_MAX;
+	update_pos(s);
+	pos = temp->pos;
+	while (temp)
+	{
+		if (temp->index < i)
+		{
+			i = temp->index;
+			pos = temp->pos;
+		}
+		temp = temp->next;
+	}
+	return (pos);
+}
+=== end of updater.c ===
+=== start of validation.c ===
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   validation.c                                       :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: thenriqu <thenriqu@student.42porto.com>    +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2025/05/20 13:14:01 by thenriqu          #+#    #+#             */
+/*   Updated: 2025/05/20 13:30:03 by thenriqu         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
+#include "../inc/push_swap.h"
+
+static int	is_number(char *arg)
+{
+	while ((*arg >= 9 && *arg <= 13) || *arg == ' ')
+		arg++;
+	if (*arg == '+' || *arg == '-')
+		arg++;
+	while (*arg >= '0' && *arg <= '9')
+		arg++;
+	if (*arg)
+		return (0);
+	return (1);
+}
+
+static int	is_zero(char *arg)
+{
+	if (*arg == '+' || *arg == '-')
+		arg++;
+	while (*arg == '0')
+		arg++;
+	if (*arg)
+		return (0);
+	return (1);
+}
+
+static int	nb_cmp(char *s1, char *s2)
+{
+	if (*s1 == '+')
+	{
+		if (*s2 != '+')
+			s1++;
+	}
+	else
+	{
+		if (*s2 == '+')
+			s2++;
+	}
+	while (*s1 && *s2 && *s1 == *s2)
+	{
+		s1++;
+		s2++;
+	}
+	return ((unsigned char)*s1 - (unsigned char)*s2);
+}
+
+static int	has_duplicate(char **args)
+{
+	int	i;
+	int	j;
+
+	i = 0;
+	while (args[i])
+	{
+		j = 0;
+		while (args[j])
+		{
+			if (nb_cmp(args[i], args[j]) == 0 && i != j)
+				return (1);
+			j++;
+		}
+		i++;
+	}
+	return (0);
+}
+
+int	ft_validate(char **args)
+{
+	int	i;
+	int	zero_count;
+
+	if (has_duplicate(args))
+		return (0);
+	zero_count = 0;
+	i = 0;
+	while (args[i])
+	{
+		if (!is_number(args[i]))
+			return (0);
+		zero_count += is_zero(args[i]);
+		if (zero_count > 1)
+			return (0);
+		i++;
+	}
+	return (1);
+}
+=== end of validation.c ===
