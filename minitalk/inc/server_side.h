@@ -8,4 +8,9 @@
 # include <unistd.h>
 # include <signal.h>
 
+/*	Functions:	*/
+
+void	ft_handle_signal(int c, int pid);
+char	*ft_add_char(char *str, int c);
+
 #endif

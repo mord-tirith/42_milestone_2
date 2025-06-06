@@ -17,7 +17,7 @@ static void	signal_to_char(int sig, siginfo_t *info, void *c)
 	bit_index++;
 	if (bit_index == 8)
 	{
-		write(1, &bit_value, 1);
+		ft_handle_signal(bit_value, (int)client_pid);
 		bit_index = 0;
 		bit_value = 0;
 		kill(client_pid, SIGUSR1);

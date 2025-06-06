@@ -1,0 +1,105 @@
+=== start of build_msg.c ===
+
+#include "server_side.h"
+#include <stddef.h>
+#include <stdlib.h>
+
+char	*ft_add_char(char *str, int c)
+{
+	char	*b_str;
+	size_t	len;
+
+	if (!str)
+	{
+		b_str = ft_calloc(sizeof(char), 2);
+		if (!b_str)
+			return (NULL);
+		b_str[0] = (char)c;
+		return (b_str);
+	}
+	len = ft_strlen(str);
+	b_str = ft_calloc(sizeof(char), len + 2);
+	if (!b_str)
+		return (NULL);
+	ft_memcpy(b_str, str, len + 2);
+	b_str[len + 1] = (char)c;
+	return (b_str);
+}
+
+void	ft_handle_signal(int c)
+{
+	static char	*message;
+	char		*temp;
+
+	if (c == 0)
+	{
+		ft_printf("%s", message);
+		free(message);
+		return ;
+	}
+	temp = ft_add_char(message, c);
+	free(message);
+	if (!temp)
+		return ;
+	message = temp;
+}
+=== end of build_msg.c ===
+=== start of server.c ===
+
+#include "server_side.h"
+#include <bits/types/siginfo_t.h>
+#include <signal.h>
+#include <sys/types.h>
+
+static void	signal_to_char(int sig, siginfo_t *info, void *c)
+{
+	static int		bit_index;
+	static char		bit_value;
+	static pid_t	client_pid;
+
+	(void)c;
+	if (client_pid != info->si_pid)
+		client_pid = info->si_pid;
+	bit_value |= (sig == SIGUSR2) << (7 - bit_index);
+	bit_index++;
+	if (bit_index == 8)
+	{
+		ft_handle_signal(bit_value);
+		bit_index = 0;
+		bit_value = 0;
+		kill(client_pid, SIGUSR1);
+	}
+}
+
+int main(void)
+{
+	struct sigaction	sa;
+
+	ft_printf("Server PID: %d\n", getpid());
+	sigemptyset(&sa.sa_mask);
+	sa.sa_flags = SA_SIGINFO;
+	sa.sa_sigaction = signal_to_char;
+	sigaction(SIGUSR1, &sa, NULL);
+	sigaction(SIGUSR2, &sa, NULL);
+	while (42)
+		pause();
+}
+=== end of server.c ===
+=== start of server_side.h ===
+
+#ifndef SERVER_SIDE_H
+# define SERVER_SIDE_H
+
+/*	Includes:	*/
+
+# include "../libft/inc/libftpp.h"
+# include <unistd.h>
+# include <signal.h>
+
+/*	Functions:	*/
+
+void	ft_handle_signal(int c);
+char	*ft_add_char(char *str, int c);
+
+#endif
+=== end of server_side.h ===

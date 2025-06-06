@@ -37,7 +37,7 @@ void	ft_send_signals(pid_t target, char byte)
 		else
 			kill(target, SIGUSR1);
 		bit--;
-		usleep(500);
+		usleep(100);
 	}
 	while(!flags.server_nodd)
 		pause();
@@ -78,7 +78,7 @@ static void	secondary(char *s_pid, char *msg)
 	}
 	ft_send_signals(pid, '\0');
 	if (flags.print_mode == 'v' || flags.print_mode == 't')
-		ft_printf("Total bytes received by server: %d\n", flags.byte_count - 1);
+		ft_printf("Total bytes received by server: %d\n", flags.byte_count);
 }
 
 int main(int argc, char **argv)
