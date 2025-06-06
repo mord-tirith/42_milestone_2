@@ -67,7 +67,7 @@ int	main(int argc, char **argv)
 	else
 		arg = argv + 1;
 	if (!arg || !ft_validate(arg))
-		ft_error_handler(NULL, NULL, NULL, 0);
+		ft_error_handler(NULL, NULL, arg, argc);
 	a = ft_kickoff_a(arg, argc);
 	b = NULL;
 	size = ft_st_len(a);
