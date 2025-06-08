@@ -12,23 +12,23 @@ static char	**get_paths(char *cmd, char **ep)
 	size_t	i;
 
 	i = 0;
-	while (ep[i] && !ft_strstr(ep[i], "PATH="))
+	while (ep[i] && !ft_strnstr(ep[i], "PATH=", 5))
 		i++;
-	path = ft_strjoin("/", cmd);
-	if (!path)
-		ft_error_handler(BAD_MALL);
-	split = ft_split(ep[i], ':');
+	split = ft_split(&ep[i][5], ':');
 	if (!split)
 		return (ft_bad_split(split));
-	i = 0;
-	while (split[i])
+	i = -1;
+	while (split[++i])
 	{
+		path = ft_strjoin("/", cmd);
+		if (!path)
+			return (ft_bad_split(split));
 		temp = ft_strjoin(split[i], path);
 		if (!temp)
 			return (ft_bad_split(split));
 		free(split[i]);
 		split[i] = temp;
-		i++;
+		free(path);
 	}
 	return (split);
 }
@@ -44,15 +44,12 @@ char	*ft_get_bin(char *cmd, char **ep)
 	while (paths[i] && access(paths[i], X_OK) != 0)
 		i++;
 	if (!paths[i])
-		return (cmd);
-	bin = ft_strdup(paths[i]);
-	i = 0;
-	while (paths[i])
 	{
-		free(paths[i]);
-		i++;
+		ft_clean_split(paths);
+		return (ft_strdup(cmd));
 	}
-	free(paths);
+	bin = ft_strdup(paths[i]);
+	ft_clean_split(paths);
 	return (bin);
 }
 

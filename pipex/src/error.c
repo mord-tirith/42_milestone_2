@@ -15,7 +15,7 @@ void	ft_error_handler(int m)
 	exit(1);
 }
 
-char	**ft_bad_split(char **tab)
+void	ft_clean_split(char **tab)
 {
 	size_t	i;
 
@@ -26,6 +26,11 @@ char	**ft_bad_split(char **tab)
 		i++;
 	}
 	free(tab);
+}
+
+char	**ft_bad_split(char **to_clean)
+{
+	ft_clean_split(to_clean);
 	ft_error_handler(BAD_MALL);
 	return (NULL);
 }

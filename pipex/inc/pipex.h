@@ -19,7 +19,10 @@
 # define WRIT_FLAGS O_WRONLY | O_CREAT | O_TRUNC, 0777
 
 /*	Functions:	*/
+int		ft_fd_opener(char *file, int io);
 void	ft_error_handler(int m);
+void	ft_clean_split(char **tab);
+void	ft_exec_cmd(char *cmd, char **ep);
 char	*ft_get_bin(char *cmd, char **ep);
-char	**ft_bad_split(char **tab);
+char	**ft_bad_split(char **to_clean);
 #endif
