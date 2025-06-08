@@ -19,13 +19,15 @@
 // Prototypes
 /// Main
 int		ft_printf(const char *format, ...);
+int		ft_perror(const char *format, ...);
+int		ft_pfile(int fd, const char *format, ...);
 
 /// Helpers
-void	ft_printf_c(int c, int *i);
-void	ft_printf_s(char *s, int *i);
-void	ft_printf_di(int n, int *i);
-void	ft_printf_u(unsigned int n, int *i);
-void	ft_printf_x(unsigned int n, int *i, char mode);
-void	ft_printf_p(void *ptr, int *i);
+void	ft_printf_c(int c, int *i, int fd);
+void	ft_printf_s(char *s, int *i, int fd);
+void	ft_printf_di(int n, int *i, int fd);
+void	ft_printf_u(unsigned int n, int *i, int fd);
+void	ft_printf_x(unsigned int n, int *i, char mode, int fd);
+void	ft_printf_p(void *ptr, int *i, int fd);
 
 #endif

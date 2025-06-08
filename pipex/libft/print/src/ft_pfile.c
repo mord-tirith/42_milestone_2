@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   ft_printf.c                                        :+:      :+:    :+:   */
+/*   ft_perror.c                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: thenriqu <thenriqu@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/24 08:17:35 by thenriqu          #+#    #+#             */
-/*   Updated: 2025/04/28 13:27:13 by thenriqu         ###   ########.fr       */
+/*   Updated: 2025/06/08 10:49:44 by thenriqu         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -46,7 +46,7 @@ static int	ft_validate(char c)
 	return (0);
 }
 
-int	ft_printf(const char *format, ...)
+int	ft_pfile(int fd, const char *format, ...)
 {
 	va_list	args;
 	int		count;
@@ -58,12 +58,12 @@ int	ft_printf(const char *format, ...)
 		if (*format == '%' && ft_validate(*(format + 1)))
 		{
 			format++;
-			ft_parsel(*format, args, &count, 1);
+			ft_parsel(*format, args, &count, fd);
 			if (*format == '&')
 				format++;
 		}
 		else
-			ft_printf_c(*format, &count, 1);
+			ft_printf_c(*format, &count, fd);
 		format++;
 	}
 	va_end(args);

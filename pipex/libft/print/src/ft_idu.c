@@ -27,7 +27,7 @@ static int	ft_digicount(unsigned int n)
 	return (count);
 }
 
-void	ft_printf_di(int n, int *i)
+void	ft_printf_di(int n, int *i, int fd)
 {
 	char			number[12];
 	unsigned int	num;
@@ -51,17 +51,17 @@ void	ft_printf_di(int n, int *i)
 	}
 	if (!n)
 		number[0] = '0';
-	ft_printf_s(number, i);
+	ft_printf_s(number, i, fd);
 }
 
-void	ft_printf_u(unsigned int n, int *i)
+void	ft_printf_u(unsigned int n, int *i, int fd)
 {
 	char	number[11];
 	int		pos;
 
 	if (!n)
 	{
-		ft_printf_c('0', i);
+		ft_printf_c('0', i, fd);
 		return ;
 	}
 	pos = ft_digicount(n);
@@ -72,5 +72,5 @@ void	ft_printf_u(unsigned int n, int *i)
 		pos--;
 		n /= 10;
 	}
-	ft_printf_s(number, i);
+	ft_printf_s(number, i, fd);
 }

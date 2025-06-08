@@ -8,7 +8,7 @@ CFLAGS		= -Wall -Werror -Wextra -I../inc/
 AR			= ar rcs
 CC			= cc
 
-OBJS 		= ./src/ft_printf.o src/ft_cs.o src/ft_idu.o src/ft_xp.o	
+OBJS 		= ./src/ft_printf.o src/ft_pfile.o src/ft_perror.o src/ft_cs.o src/ft_idu.o src/ft_xp.o	
 SRCS		= $(OBJS:.o=.c)
 
 #####▜###▗#▗####

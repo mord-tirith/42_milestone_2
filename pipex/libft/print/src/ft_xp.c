@@ -27,7 +27,7 @@ static int	ft_hex_digicount(unsigned long n)
 	return (count);
 }
 
-void	ft_printf_x(unsigned int n, int *i, char mode)
+void	ft_printf_x(unsigned int n, int *i, char mode, int fd)
 {
 	char	*hex;
 	char	number[9];
@@ -47,10 +47,10 @@ void	ft_printf_x(unsigned int n, int *i, char mode)
 		n /= 16;
 		pos--;
 	}
-	ft_printf_s(number, i);
+	ft_printf_s(number, i, fd);
 }
 
-void	ft_printf_p(void *ptr, int *i)
+void	ft_printf_p(void *ptr, int *i, int fd)
 {
 	int				pos;
 	char			*hex;
@@ -59,7 +59,7 @@ void	ft_printf_p(void *ptr, int *i)
 
 	if (!ptr)
 	{
-		ft_printf_s("(nil)", i);
+		ft_printf_s("(nil)", i, fd);
 		return ;
 	}
 	hex = "0123456789abcdef";
@@ -72,6 +72,6 @@ void	ft_printf_p(void *ptr, int *i)
 		n /= 16;
 		pos--;
 	}
-	ft_printf_s("0x", i);
-	ft_printf_s(pointer, i);
+	ft_printf_s("0x", i, fd);
+	ft_printf_s(pointer, i, fd);
 }
