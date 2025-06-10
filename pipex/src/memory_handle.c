@@ -3,16 +3,6 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
-static void	fork_guardian(pid_t pid, char **av, char *bin)
-{
-	int	exit_code;
-
-	waitpid(pid, &exit_code, 0);
-	free(bin);
-	ft_clean_split(av);
-	exit(exit_code);
-}
-
 static void	run_exec(char *bin, char **av, char **ep)
 {
 	pid_t	pid;

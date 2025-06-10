@@ -57,6 +57,7 @@ int	ft_fd_opener(char *file, int io)
 {
 	int	fd;
 
+		fd = 0;
 	if (io == MODE_READ)
 		fd = open(file, READ_FLAGS);
 	else if (io == MODE_WRIT)

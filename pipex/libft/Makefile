@@ -33,7 +33,7 @@ MAKEFLAGS += --no-print-directory
 #▌ ▙▌▐▖▙▖▄▌#
 ############
 
-.PHONY: all print/ft_printf.a lib/libft.a gnl/get_next_line.a clean fclean re banner
+.PHONY: all print/ft_printf.a lib/libft.a gnl/get_next_line.a clean fclean re banner mclean
 
 all:
 	@if make -q $(NAME); then \
@@ -79,6 +79,8 @@ fclean: clean
 	else \
 		echo "${RED}Error: ${PNAME} isn't installed"; \
 	fi
+
+mclean: re clean
 
 re: fclean all
 

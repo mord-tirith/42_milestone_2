@@ -8,11 +8,10 @@
 NAME		= pipex
 PNAME		= Pipex
 SRC_DIR = src/
-OBJ_DIR = .temp/
 INC_DIR = inc/
 
 # File Variables:
-SRC_FILES	= 
+SRC_FILES	= error.c file_ctl.c memory_handle.c pipex.c
 SRC				= $(addprefix $(SRC_DIR), $(SRC_FILES))
 OBJ_FILES	= $(SRC:.c=.o)
 OBJ				= $(addprefix $(OBJ_DIR), $(OBJ_FILES))
