@@ -3,7 +3,6 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
-#include <stdlib.h>
 
 static void	run_child(char **av, int *pipe, char **ep)
 {
@@ -47,3 +46,5 @@ int	main(int argc, char **argv, char **envp)
 		wait(NULL);
 	}
 }
+
+

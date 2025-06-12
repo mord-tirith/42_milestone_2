@@ -44,7 +44,7 @@ MAKEFLAGS += --no-print-directory
 #  ▌ ▙▌▐▖▙▖▄▌  #
 ################
 
-.PHONY: all true_all clean fclean re clean_install banner mlx
+.PHONY: all true_all clean fclean re mclean banner mlx
 
 all:
 	@if make -q true_all; then \
@@ -86,7 +86,7 @@ fclean: clean
 
 re: fclean all
 
-clean_install:
+mclean:
 	@make all
 	@make clean
 

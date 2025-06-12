@@ -1,0 +1,56 @@
+
+Plataformas diferentes possuem ferramentas diferentes.
+
+Não é um conceito tão estranho assim de se imaginar, é fácil entender que provavelmente seu pc Windows tem uma calculadora diferente do seu iPhone que tem um app do YouTube diferente da sua TV Samsung.
+
+Ainda assim, esse conceito me traiu durante a Gamejam da 42 Porto, um lapso de cuidado que teria sido muito fácil de pegar, se eu tivesse parado para pensar nisso.
+
+A idéia de nosso jogo era simples e comédica: um alquimista (tema da Gamejam) havia acabado de descobrir como criar ouro, e todos na sua cidade decidiram atacá-lo.
+
+Meu trabalho foi criar os inimigos, divididos em três grupos: mineiros furiosos por não mais terem trabalho minando ouro, cidadãos comuns lhe atacando sem muito propósito e banqueiros tentando roubar sua poção.
+
+Após criar os 3 inimigos, ainda com 24 horas sobrando para entregar o projeto, fui tratar de coisas mais interessantes neles, o foco sendo uma mecânica que realmente queríamos incluír no jogo: aurificar.
+
+"Aurificar" era o resultado do jogador utilizar uma das 4 poções disponíveis para transformar um inimigo em uma estátua de puro ouro, apenas por alguns segundos.
+
+Eu me diverti bastante criando o código disso, fazendo com que um inimigo só pudesse ser tornado em ouro se estivesse com uma quantidade baixa de vida sobrando.
+
+Depois de fazer a poção depender da vida do alvo, eu segui para o próximo passo: fazer com que, quando um inimigo era tornado em ouro, alguns inimigos decidissem "hey, eu posso só pegar um pedaço dessa estátua e viver rico pro resto de minha vida".
+
+Nós decidimos que os mineiros não seriam sucetíveis à essa tentação, já que eles estavam atacando o alquimista por motivos puramente passionais, então eu primeiro limitei esse novo efeito para ocorrer apenas nos banqueiros e nos cidadãos comuns: os inimigos que estavam atacando por dinheiro.
+
+Então eu fiz a escolha que destruíu essa parte do projeto: "e se fosse uma chance aleatória para banqueiros e cidadãos se distraírem?"
+
+Era uma ideia boa: um banqueiro teoricamente teria mais controle do impulso de desistir de uma fonte de ouro infinita por uma única barra de ouro.
+
+Assim sendo, criei o código com as funções random do Godot: quando um inimigo era "aurificado", banqueiros e cidadãos perto daquele inimigo tinham uma chance percentual de esquecerem do jogador por alguns segundos, mudando de alvo. Eles também causavam dano ao inimigo aurificado quando batiam nele para pegar pedaços de ouro.
+
+Era uma ideia hilária, tornar um inimigo em ouro e ver os aliados dele destruíndo aquele inimigo por alguns trocados, e funcionava perfeitamente...
+
+Até o dia de enviar o projeto.
+
+Foi aí que descobri que, quando o Godot estava rodando no meu computador, qualquer código usando "randi" (que eu havia usado bastante no código dessa mecânica) automaticamente usava a função rand() da bibliotéca stdlib.h da língua de programação C...
+
+Mas, se jogado para uma plataforma onde a língua C não está instalada como, por exemplo, um navegador Firefox, o código não mais funcionaria.
+
+E foi com coração partido que vi várias horas de pesquisa, trabalho e aperfeiçoamento de variáveis jogadas fora, já que "por exemplo, um navegador" era exatamente o lugar onde os jogos da Gamejam seriam testados.
+
+O código ainda existe e ainda funciona, se você rodar o jogo em um computador que tenha C instalado não vai ter nenhum problema com a mecânica da "aurificação," mas para os propósitos da Gamejam, era como se eu nunca tivesse escrito aquela parte.
+
+O importante, porém, é lembrar que você vai cometer erros, e tem apenas que tentar evitar cometer erros de novo.
+
+Agora que estou trabalhando no projeto so_long, no qual temos que criar um jogo interativo usando a MLX como engine, essa experiência já me ajudou a evitar alguns problemas: a MLX cria diferentes alocações de memória quando é executada num sistema Linux do que quando roda em Windows ou Mac. Ela também usa diferentes números como códigos para as teclas do teclado em Linux, Mac e Windows.
+
+Graças à tragédia com minha querida mecânica de aurificação na Gamejam, eu entrei nesse projeto sabendo que precisava tomar cuidado com as 3 plataformas onde a MLX pode rodar, e é por isso que as bibliotecas do meu so_long incluem uma simples verificação:
+
+#ifdef __linux__
+(Código único para sistemas linux)
+#elif __APPLE__
+(Código para sistemas Mac)
+#elif _WIN32
+(Código Windows)
+#else
+(Avisos de erro, já que MLX só funciona nesses 3 sistemas)
+#endif
+
+Com essa simples verificação, eu poderia ter salvo meu trabalho, listando diferentes fontes de funções aleatórias que o jogo poderia buscar se não achasse as bibliotecas da língua C.

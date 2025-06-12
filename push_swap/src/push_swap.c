@@ -66,7 +66,7 @@ int	main(int argc, char **argv)
 		arg = safe_split(argv[1]);
 	else
 		arg = argv + 1;
-	if (!arg || !ft_validate(arg))
+	if (!arg || !arg[0] || !ft_validate(arg))
 		ft_error_handler(NULL, NULL, arg, argc);
 	a = ft_kickoff_a(arg, argc);
 	b = NULL;

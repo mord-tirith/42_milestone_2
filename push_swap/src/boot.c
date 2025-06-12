@@ -49,6 +49,8 @@ t_stack	*ft_kickoff_a(char **v, int argc)
 	i = 0;
 	while (i < c)
 	{
+		if (!v[i][0])
+			ft_error_handler(&a, NULL, v, argc);
 		n = ft_atol(v[i]);
 		if (n > INT_MAX || n < INT_MIN)
 			ft_error_handler(&a, NULL, v, argc);
