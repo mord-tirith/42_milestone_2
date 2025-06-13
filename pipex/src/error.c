@@ -12,7 +12,7 @@ void	ft_error_handler(int m)
 		ft_perror("Fork error\n");
 	else if (m == BAD_MALL)
 		ft_perror("Malloc error\n");
-	exit(1);
+	exit(m);
 }
 
 void	ft_clean_split(char **tab)

@@ -36,7 +36,6 @@ char	**ft_bad_split(char **to_clean)
 	return (NULL);
 }
 === end of error.c ===
-
 === start of file_ctl.c ===
 
 #include "pipex.h"
@@ -73,6 +72,30 @@ static char	**get_paths(char *cmd, char **ep)
 	return (split);
 }
 
+static char *get_file_pwd(char *file, char **ep)
+{
+	size_t	i;
+	char	*pwd;
+	char	*file_path;
+
+	i = 0;
+	while (ep[i] && !(ft_strnstr(ep[i], "PWD=", 4)))
+		i++;
+	pwd = ft_strdup(&ep[i][4]);
+	if (!pwd)
+		return (NULL);
+	file_path = NULL;
+	file_path = ft_strjoin("/", file);
+	if (!file_path)
+	{
+		free(pwd);
+		return (NULL);
+	}
+	file_path = ft_strjoin(pwd, file_path);
+	free(pwd);
+	return (file_path);
+}
+
 char	*ft_get_bin(char *cmd, char **ep)
 {
 	char	*bin;
@@ -93,37 +116,50 @@ char	*ft_get_bin(char *cmd, char **ep)
 	return (bin);
 }
 
-int	ft_fd_opener(char *file, int io)
-{
-	int	fd;
 
+static void	file_error(char *file, int type)
+{
+	if (type == EXIST_ERROR)
+		ft_perror("pipex: no such file or directory:");
+	else if (type == PERMS_ERROR)
+		ft_perror("pipex: permission denied:");
+	ft_perror(" %s\n", file);
+	ft_error_handler(BAD_OPEN);
+}
+
+int	ft_fd_opener(char *file, int io, char **ep)
+{
+	int		fd;
+	char	*path;
+
+	fd = -1;
+	path = get_file_pwd(file, ep);
 	if (io == MODE_READ)
-		fd = open(file, READ_FLAGS);
+	{
+		if (access(path, F_OK) != 0)
+			file_error(file, EXIST_ERROR);
+		if (access(path, R_OK) != 0)
+			file_error(file, PERMS_ERROR);
+		fd = open(path, READ_FLAGS);
+	}
 	else if (io == MODE_WRIT)
-		fd = open(file, WRIT_FLAGS);
-	else
-		ft_error_handler(BAD_OPEN);
-	if (fd < 0)
-		ft_error_handler(BAD_OPEN);
+	{
+		if (access(path, F_OK) == 0)
+		{
+			if (access(path, W_OK) != 0)
+				file_error(file, PERMS_ERROR);
+		}
+		fd = open(path, WRIT_FLAGS);
+	}
+	free(path);
 	return (fd);
 }
 === end of file_ctl.c ===
-
 === start of memory_handle.c ===
 #include "pipex.h"
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/wait.h>
-
-static void	fork_guardian(pid_t pid, char **av, char *bin)
-{
-	int	exit_code;
-
-	waitpid(pid, &exit_code, 0);
-	free(bin);
-	ft_clean_split(av);
-	exit(exit_code);
-}
 
 static void	run_exec(char *bin, char **av, char **ep)
 {
@@ -133,8 +169,11 @@ static void	run_exec(char *bin, char **av, char **ep)
 	pid = fork();
 	if (pid == 0)
 	{
-		execve(bin, av, ep);
-		ft_perror("pipex: execve failed\n");
+		if (execve(bin, av, ep) == -1)
+		{
+			ft_perror("pipex: command not found:");
+			ft_perror(" %s\n", bin);
+		}
 		exit(1);
 	}
 	else
@@ -163,20 +202,20 @@ void	ft_exec_cmd(char *cmd, char **ep)
 	run_exec(bin, av, ep);
 }
 === end of memory_handle.c ===
-
 === start of pipex.c ===
 
 #include "pipex.h"
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
-#include <stdlib.h>
 
 static void	run_child(char **av, int *pipe, char **ep)
 {
 	int	fd;
 
-	fd = ft_fd_opener(av[0], MODE_READ);
+	fd = ft_fd_opener(av[0], MODE_READ, ep);
+	if (fd < 0)
+		ft_error_handler(BAD_OPEN);
 	dup2(fd, 0);
 	dup2(pipe[1], 1);
 	close(pipe[0]);
@@ -187,7 +226,9 @@ static void	run_parent(char **av, int *pipe, char **ep)
 {
 	int	fd;
 
-	fd = ft_fd_opener(av[3], MODE_WRIT);
+	fd = ft_fd_opener(av[3], MODE_WRIT, ep);
+	if (fd < 0)
+		ft_error_handler(BAD_OPEN);
 	dup2(fd, 1);
 	dup2(pipe[0], 0);
 	close(pipe[1]);
@@ -214,8 +255,9 @@ int	main(int argc, char **argv, char **envp)
 		wait(NULL);
 	}
 }
-=== end of pipex.c ===
 
+
+=== end of pipex.c ===
 === start of pipex.h ===
 
 #ifndef PIPEX_H
@@ -236,9 +278,11 @@ int	main(int argc, char **argv, char **envp)
 # define MODE_WRIT 2
 # define READ_FLAGS O_RDONLY, 0777
 # define WRIT_FLAGS O_WRONLY | O_CREAT | O_TRUNC, 0777
+# define EXIST_ERROR -1
+# define PERMS_ERROR -2
 
 /*	Functions:	*/
-int		ft_fd_opener(char *file, int io);
+int		ft_fd_opener(char *file, int io, char **ep);
 void	ft_error_handler(int m);
 void	ft_clean_split(char **tab);
 void	ft_exec_cmd(char *cmd, char **ep);
@@ -246,4 +290,14 @@ char	*ft_get_bin(char *cmd, char **ep);
 char	**ft_bad_split(char **to_clean);
 #endif
 === end of pipex.h ===
+=== start of test.c ===
+#include <stdio.h>
 
+int main() {
+    char myChar = 'A';
+    printf("\x1b[31m%c\x1b[0m\n", myChar); // Red text
+    printf("\x1b[42m%c\x1b[0m\n", myChar); // Green background
+    printf("\x1b[33m%c\x1b[0m\n", myChar); // Yellow text
+    return 0;
+}
+=== end of test.c ===

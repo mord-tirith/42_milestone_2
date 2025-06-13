@@ -11,7 +11,7 @@ SRC_DIR = src/
 INC_DIR = inc/
 
 # File Variables:
-SRC_FILES	= error.c file_ctl.c memory_handle.c pipex.c
+SRC_FILES	= error.c file_ctl.c memory_handle.c pipex.c special_split.c
 SRC				= $(addprefix $(SRC_DIR), $(SRC_FILES))
 OBJ_FILES	= $(SRC:.c=.o)
 OBJ				= $(addprefix $(OBJ_DIR), $(OBJ_FILES))

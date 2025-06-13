@@ -11,9 +11,12 @@ static void	run_exec(char *bin, char **av, char **ep)
 	pid = fork();
 	if (pid == 0)
 	{
-		execve(bin, av, ep);
-		ft_perror("pipex: execve failed\n");
-		exit(1);
+		if (execve(bin, av, ep) == -1)
+		{
+			ft_perror("pipex: command not found:");
+			ft_perror(" %s\n", bin);
+		}
+		exit(127);
 	}
 	else
 	{
@@ -29,7 +32,10 @@ void	ft_exec_cmd(char *cmd, char **ep)
 	char	**av;
 	char	*bin;
 
-	av = ft_split(cmd, ' ');
+	if (ft_strchr(cmd, '"') || ft_strchr(cmd, 39))
+		av = ft_quote_split(cmd);
+	else
+		av = ft_split(cmd, ' ');
 	if (!av)
 		ft_error_handler(BAD_MALL);
 	bin = ft_get_bin(av[0], ep);

@@ -39,6 +39,11 @@ char	*ft_get_bin(char *cmd, char **ep)
 	char	**paths;
 	size_t	i;
 
+	if (!ep || !ep[0])
+	{
+		bin = ft_strjoin("/bin/", cmd);
+		return (bin);
+	}
 	paths = get_paths(cmd, ep);
 	i = 0;
 	while (paths[i] && access(paths[i], X_OK) != 0)
@@ -53,18 +58,38 @@ char	*ft_get_bin(char *cmd, char **ep)
 	return (bin);
 }
 
+
+static void	file_error(char *file, int type)
+{
+	if (type == EXIST_ERROR)
+		ft_perror("pipex: no such file or directory:");
+	else if (type == PERMS_ERROR)
+		ft_perror("pipex: permission denied:");
+	ft_perror(" %s\n", file);
+	ft_error_handler(BAD_OPEN);
+}
+
 int	ft_fd_opener(char *file, int io)
 {
-	int	fd;
+	int		fd;
 
-		fd = 0;
+	fd = -1;
 	if (io == MODE_READ)
+	{
+		if (access(file, F_OK) != 0)
+			file_error(file, EXIST_ERROR);
+		if (access(file, R_OK) != 0)
+			file_error(file, PERMS_ERROR);
 		fd = open(file, READ_FLAGS);
+	}
 	else if (io == MODE_WRIT)
+	{
+		if (access(file, F_OK) == 0)
+		{
+			if (access(file, W_OK) != 0)
+				file_error(file, PERMS_ERROR);
+		}
 		fd = open(file, WRIT_FLAGS);
-	else
-		ft_error_handler(BAD_OPEN);
-	if (fd < 0)
-		ft_error_handler(BAD_OPEN);
+	}
 	return (fd);
 }

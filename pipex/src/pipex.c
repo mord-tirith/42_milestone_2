@@ -9,6 +9,8 @@ static void	run_child(char **av, int *pipe, char **ep)
 	int	fd;
 
 	fd = ft_fd_opener(av[0], MODE_READ);
+	if (fd < 0)
+		ft_error_handler(BAD_OPEN);
 	dup2(fd, 0);
 	dup2(pipe[1], 1);
 	close(pipe[0]);
@@ -20,6 +22,8 @@ static void	run_parent(char **av, int *pipe, char **ep)
 	int	fd;
 
 	fd = ft_fd_opener(av[3], MODE_WRIT);
+	if (fd < 0)
+		ft_error_handler(BAD_OPEN);
 	dup2(fd, 1);
 	dup2(pipe[0], 0);
 	close(pipe[1]);
