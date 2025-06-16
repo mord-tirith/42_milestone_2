@@ -12,9 +12,7 @@ INC_DIR = inc/
 MLX_DIR = minilibx-linux/
 
 # File Variables:
-SRC_FILES	= cycle_maker.c flood_fill.c game.c input_control.c looper.c map_boot.c \
-						map_draw.c map_maker.c map_parser.c map_utils.c path_giver.c player_boot.c \
-						player_draw.c
+SRC_FILES	= 
 SRC				= $(addprefix $(SRC_DIR), $(SRC_FILES))
 OBJ				= $(SRC:.c=.o)
 
@@ -23,7 +21,7 @@ OBJ				= $(SRC:.c=.o)
 CC				= cc
 CFLAGS		= -Wall -Wextra -Werror -g
 MLX_FLAGS	= -L$(MLX_DIR) -lmlx -lXext -lX11 -lm
-LIBFT			= ./libft/libft.a
+LIBFT			= ./.libft/libft.a
 
 ####################
 #      ▜   ▗ ▗     #
@@ -76,7 +74,8 @@ mlx:
 
 libft.a:
 	@echo "${YELLOW}Building Libft++${RESET}"
-	@$(MAKE) -C ./libft all
+	@$(MAKE) -C ./.libft all 1>/dev/null 2>&1
+	@echo "${BLUE} Libft++ installed${RESET}"
 
 $(SRC_DIR)%.o: $(SRC_DIR)%.c
 	@$(CC) $(CFLAGS) -I$(INC_DIR) -c $< -o $@
