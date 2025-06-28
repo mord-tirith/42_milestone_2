@@ -1,3 +1,14 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   pipex.h                                            :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: thenriqu <thenriqu@student.42porto.com>    +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2025/06/20 08:51:31 by thenriqu          #+#    #+#             */
+/*   Updated: 2025/06/20 08:53:11 by thenriqu         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
 
 #ifndef PIPEX_H
 # define PIPEX_H
@@ -15,8 +26,6 @@
 // Fd macros:
 # define MODE_READ 1
 # define MODE_WRIT 2
-# define READ_FLAGS O_RDONLY, 0777
-# define WRIT_FLAGS O_WRONLY | O_CREAT | O_TRUNC, 0644
 # define EXIST_ERROR -1
 # define PERMS_ERROR -2
 

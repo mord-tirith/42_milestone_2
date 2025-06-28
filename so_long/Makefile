@@ -8,13 +8,26 @@
 NAME		= so_long
 PNAME		= So Long
 SRC_DIR = src/
+OBJ_DIR = .obj/
 INC_DIR = inc/
 MLX_DIR = minilibx-linux/
 
 # File Variables:
-SRC_FILES	= 
+
+
+MAP_FILES =	draw_map.c reboot_map.c translate_walls.c
+MAPPER		=	$(addprefix 2_mapper/, $(MAP_FILES))
+
+ERR_FILES = printer.c
+ERRORS		= $(addprefix 1_error/, $(ERR_FILES))
+
+PAR_FILES	= flood_fill.c maparse.c ones_check.c unique_symbols.c
+PARSER		= $(addprefix 0_parser/, $(PAR_FILES))
+
+
+SRC_FILES	= $(MAPPER) $(ERRORS) $(PARSER)
 SRC				= $(addprefix $(SRC_DIR), $(SRC_FILES))
-OBJ				= $(SRC:.c=.o)
+OBJ				:= $(patsubst $(SRC_DIR)%.c, $(OBJ_DIR)%.o, $(SRC))
 
 
 # Compiler Variables:
@@ -77,12 +90,13 @@ libft.a:
 	@$(MAKE) -C ./.libft all 1>/dev/null 2>&1
 	@echo "${BLUE} Libft++ installed${RESET}"
 
-$(SRC_DIR)%.o: $(SRC_DIR)%.c
+$(OBJ_DIR)%.o: $(SRC_DIR)%.c
+	@mkdir -p $(dir $@)
 	@$(CC) $(CFLAGS) -I$(INC_DIR) -c $< -o $@
 
 clean:
 	@if ls $(OBJ) 1>/dev/null 2>&1; then \
-		rm -f $(OBJ); \
+		rm -rfd $(OBJ_DIR); \
 		echo "${YELLOW}.o files removed${RESET}"; \
 	else \
 		echo "${RED}Error: no .o files to remove at this moment${RESET}"; \

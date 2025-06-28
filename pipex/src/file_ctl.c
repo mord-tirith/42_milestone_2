@@ -1,3 +1,14 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   file_ctl.c                                         :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: thenriqu <thenriqu@student.42porto.com>    +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2025/06/20 08:53:33 by thenriqu          #+#    #+#             */
+/*   Updated: 2025/06/20 08:53:46 by thenriqu         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
 
 #include "pipex.h"
 #include <stddef.h>
@@ -58,7 +69,6 @@ char	*ft_get_bin(char *cmd, char **ep)
 	return (bin);
 }
 
-
 static void	file_error(char *file, int type)
 {
 	if (type == EXIST_ERROR)
@@ -80,7 +90,7 @@ int	ft_fd_opener(char *file, int io)
 			file_error(file, EXIST_ERROR);
 		if (access(file, R_OK) != 0)
 			file_error(file, PERMS_ERROR);
-		fd = open(file, READ_FLAGS);
+		fd = open(file, O_RDONLY, 0777);
 	}
 	else if (io == MODE_WRIT)
 	{
@@ -89,7 +99,7 @@ int	ft_fd_opener(char *file, int io)
 			if (access(file, W_OK) != 0)
 				file_error(file, PERMS_ERROR);
 		}
-		fd = open(file, WRIT_FLAGS);
+		fd = open(file, O_RDONLY | O_CREAT | O_TRUNC, 0644);
 	}
 	return (fd);
 }

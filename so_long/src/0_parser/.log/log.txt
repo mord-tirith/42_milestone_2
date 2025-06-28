@@ -1,0 +1,415 @@
+=== start of flood_fill.c ===
+
+#include "so_long.h"
+#include "parse_lib.h"
+#include <stdlib.h>
+
+static void	coin_flood(int y, int x, t_validators *v)
+{
+	if (x < 0 || y < 0 || x >= v->x || y >= v->y || v->coin_map[y][x] == '1' ||
+	v->coin_map[y][x] == 'F' || v->coin_map[y][x] == 'E')
+		return ;
+	if (v->coin_map[y][x] == 'C')
+		v->coins -= 1;
+	v->coin_map[y][x] = 'F';
+	coin_flood(y - 1, x, v);
+	coin_flood(y, x - 1, v);
+	coin_flood(y + 1, x, v);
+	coin_flood(y, x + 1, v);
+}
+
+static int	exit_flood(int y, int x, t_validators *v)
+{
+
+	if (x < 0 || y < 0 || x >= v->x || y >= v->y
+		|| v->exit_map[y][x] == '1' || v->exit_map[y][x] == 'F')
+		return (0);
+	if (v->exit_map[y][x] == 'E')
+		return (1);
+	v->exit_map[y][x] = 'F';
+	return (exit_flood(y - 1, x, v) ||
+	exit_flood(y, x + 1, v) ||
+	exit_flood(y + 1, x, v) ||
+	exit_flood(y, x - 1, v));
+}
+
+static char	**bad_arr(t_validators *v)
+{
+	if (v->coin_map)
+	{
+		while (*(v->coin_map))
+		{
+			free(*(v->coin_map));
+			v->coin_map += 1;
+		}
+		free(v->coin_map);
+	}
+	if (v->exit_map)
+	{
+		while (*(v->exit_map))
+		{
+			free(*(v->exit_map));
+			v->exit_map += 1;
+		}
+		free(v->exit_map);
+	}
+	v->error_mask |= MALLOCS_ER;
+	return (NULL);
+}
+
+static char	**clone_arr(t_validators *v)
+{
+	int		i;
+	char	**new_arr;
+
+	new_arr = ft_calloc(v->y + 1, sizeof(char *));
+	if (!new_arr)
+		return (bad_arr(v));
+	i = 0;
+	while (v->arr[i])
+	{
+		new_arr[i] = ft_strdup(v->arr[i]);
+		if (!new_arr[i])
+			return (bad_arr(v));
+		i++;
+	}
+	return (new_arr);
+}
+
+void	ft_flood_map(t_validators *v)
+{
+	v->coin_map = NULL;
+	v->exit_map = NULL;
+	v->coin_map = clone_arr(v);
+	v->exit_map = clone_arr(v);
+	if (!v->coin_map || !v->exit_map)
+	{
+		bad_arr(v);
+		return ;
+	}
+	if (v->coin_map)
+		coin_flood(v->p_y, v->p_x, v);
+	if (v->exit_map)
+		v->exit = exit_flood(v->p_y, v->p_x, v);
+	if (v->coins)
+		v->error_mask |= LOCKOIN_ER;
+	if (!v->exit)
+		v->error_mask |= LOCKEXI_ER;
+}
+=== end of flood_fill.c ===
+=== start of main.c ===
+#include "parse_lib.h"
+#include "so_long.h"
+#include <stdio.h>
+#include <stdlib.h>
+
+int main()
+{
+	char **map = malloc(sizeof(char *) * 10);
+
+	for (int i = 0; i < 9; i++)
+		map[i] = malloc(6);
+	map[0] = ft_strdup("1111");
+	map[1] = ft_strdup("11P11");
+	map[2] = ft_strdup("10101");
+	map[3] = ft_strdup("10001");
+	map[4] = ft_strdup("10001");
+	map[5] = ft_strdup("100E1");
+	map[6] = ft_strdup("10101");
+	map[7] = ft_strdup("10001");
+	map[8] = ft_strdup("11101");
+	map[9] = NULL;
+	t_game g;
+	g.map->arr = map;
+	int x = ft_valid_map(&g);
+
+	if (!x)
+		printf("Valid map!\n");
+	if (x >> 0 & 1)
+		printf("Malloc error\n");
+	if (x >> 1 & 1)
+		printf("Map file error\n");
+	if (x >> 2 & 1)
+		printf("Inconsistent x values error\n");
+	if (x >> 3 & 1)
+		printf("Multiple players\n");
+	if (x >> 4 & 1)
+		printf("Multiple exits\n");
+	if (x >> 5 & 1)
+		printf("Not enclosed by 1s\n");
+	if (x >> 6 & 1)
+		printf("No coins\n");
+	if (x >> 7 & 1)
+		printf("Unreacheable coin\n");
+	if (x >> 8 & 1)
+		printf("Unreacheable exit\n");
+
+
+	printf("%d", x);
+}
+=== end of main.c ===
+=== start of maparse.c ===
+
+#include "so_long.h"
+#include "parse_lib.h"
+#include <stdlib.h>
+
+static t_validators	*boot_validators(t_game *game)
+{
+	t_validators	*v;
+
+	v = malloc(sizeof(t_validators));
+	if (!v)
+		return (NULL);
+	v->error_mask = 0;
+	v->coins = 0;
+	v->exit = 0;
+	v->player = 0;
+	v->x = 0;
+	v->y = 0;
+	v->flood = 0;
+	v->arr = game->map->arr;
+	return (v);
+}
+
+int	ft_valid_map(t_game *game)
+{
+	t_validators	*v;
+
+	v = boot_validators(game);
+
+	if (!v)
+		return (MALLOCS_ER);
+	ft_uniques(v);
+	ft_check_ones(v);
+	ft_flood_map(v);
+	
+	return (v->error_mask);
+}
+=== end of maparse.c ===
+=== start of ones_check.c ===
+
+#include "so_long.h"
+#include "parse_lib.h"
+
+static int	top_and_bottom(t_validators *v)
+{
+	int	i;
+	int	y;
+
+	i = 0;
+	y = v->y - 1;
+	while (v->arr[0][i])
+	{
+		if (v->arr[0][i] != '1')
+			return (0);
+		i++;
+	}
+	i = 0;
+	while (v->arr[y][i])
+	{
+		if (v->arr[y][i] != '1')
+			return (0);
+		i++;
+	}
+	return (1);
+}
+
+static int	sides(t_validators *v)
+{
+	int	i;
+
+	i = 1;
+	while (i < v->y)
+	{
+		if (v->arr[i][0] != '1' || v->arr[i][v->x - 1] != '1')
+			return (0);
+		i++;
+	}
+	return (1);
+}
+
+void	ft_check_ones(t_validators *v)
+{
+	int	passed;
+
+	passed = 1;
+	if (!top_and_bottom(v) || !sides(v))
+		passed = 0;
+	if (!passed)
+		v->error_mask |= OPENWAL_ER;
+}
+=== end of ones_check.c ===
+=== start of parse_lib.h ===
+
+#ifndef PARSE_LIB_H
+# define PARSE_LIB_H
+
+/* Includes: */
+# include "so_long.h"
+# include <stdlib.h>
+
+/* Types: */
+
+typedef struct s_validators
+{
+	int				flood;
+	char			**arr;
+	char			**coin_map;
+	char			**exit_map;
+	unsigned int	error_mask;
+	unsigned int	player;
+	unsigned int	exit;
+	unsigned int	coins;
+	unsigned int	x;
+	unsigned int	y;
+	unsigned int	p_x;
+	unsigned int	p_y;
+}	t_validators;
+
+/* Macros: */
+// Exit Status Faux-Bitmask
+# define SUCCESSFUL 0
+# define MALLOCS_ER 1
+# define MAPFILE_ER 2
+# define X_VALUE_ER 4
+# define PLAYERS_ER 8
+# define EXITPLU_ER 16
+# define OPENWAL_ER 32
+# define NOCOINS_ER 64
+# define LOCKOIN_ER 128
+# define LOCKEXI_ER 256
+
+/* Functions: */
+void	ft_uniques(t_validators *v);
+void	ft_flood_map(t_validators *v);
+void	ft_check_ones(t_validators *v);
+
+#endif
+=== end of parse_lib.h ===
+=== start of so_long.h ===
+
+#ifndef SO_LONG_H
+# define SO_LONG_H
+
+/* Global Includes: */
+# include "../../.libft/inc/libftpp.h"
+
+/* Types: */
+
+typedef struct s_map
+{
+	int		x;
+	int		y;
+	char	**arr;
+}	t_map;
+
+typedef struct s_game
+{
+	void	*mlx;
+	void	*win;
+	t_map	*map;
+}	t_game;
+
+/* Functions: */
+int	ft_valid_map(t_game *game);
+#endif
+=== end of so_long.h ===
+=== start of unique_symbols.c ===
+
+#include "parse_lib.h"
+
+static void	valid_e(t_validators *v)
+{
+	int	x;
+	int	y;
+
+	y = 0;
+	while (v->arr[y])
+	{
+		x = 0;
+		while (v->arr[y][x])
+		{
+			if (v->arr[y][x] == 'E' && !v->exit)
+				v->exit = 1;
+			else if (v->arr[y][x] == 'E')
+				v->error_mask |= EXITPLU_ER;
+			x++;
+		}
+		y++;
+	}
+	v->y = y;
+}
+
+static void	valid_p(t_validators *v)
+{
+	int	x;
+	int	y;
+
+	y = 0;
+	while (v->arr[y])
+	{
+		x = 0;
+		while (v->arr[y][x])
+		{
+			if (v->arr[y][x] == 'P' && !v->player)
+			{
+				v->player = 1;
+				v->p_x = x;
+				v->p_y = y;
+			}
+			else if (v->arr[y][x] == 'P')
+				v->error_mask |= PLAYERS_ER;
+			x++;
+		}
+		y++;
+	}
+}
+
+static void	valid_c(t_validators *v)
+{
+	int	y;
+	int	x;
+
+	y = 0;
+	while (v->arr[y])
+	{
+		x = 0;
+		while (v->arr[y][x])
+		{
+			if (v->arr[y][x] == 'C')
+				v->coins++;
+			x++;
+		}
+		y++;
+	}
+	if (!v->coins)
+		v->error_mask |= NOCOINS_ER;
+}
+
+static int	valid_x(t_validators *v)
+{
+	int		i;
+
+	i = 0;
+	v->x = ft_strlen(v->arr[0]);
+	while (v->arr[i])
+	{
+		if (ft_strlen(v->arr[i]) != v->x)
+		{
+			v->error_mask |= X_VALUE_ER;
+			return (0);
+		}
+		i++;
+	}
+	return (1);
+}
+
+void	ft_uniques(t_validators *v)
+{
+	valid_x(v);
+	valid_p(v);
+	valid_e(v);
+	valid_c(v);
+}
+=== end of unique_symbols.c ===
