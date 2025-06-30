@@ -3,8 +3,8 @@
 # define SO_LONG_H
 
 /* Global Includes: */
-# include "../../.libft/inc/libftpp.h"
-# include "../../minilibx-linux/mlx.h"
+# include "../.libft/inc/libftpp.h"
+# include "../minilibx-linux/mlx.h"
 
 /* Types: */
 
@@ -16,14 +16,19 @@ typedef struct s_map
 	char	**layout;
 }	t_map;
 
-typedef struct s_data
+typedef struct s_assets
 {
+	char	*map_file;
 	void	*a_map[128];
 }	t_assets;
 
 typedef struct s_game
 {
 	int			error_bitmask;
+	int			move_count;
+	int			p_x;
+	int			p_y;
+	int			coins;
 	void		*mlx;
 	void		*win;
 	t_map		map;
@@ -42,14 +47,57 @@ typedef enum e_flags
 	OPENWAL_ER = 1 << 6,
 	NOCOINS_ER = 1 << 7,
 	LOCKOIN_ER = 1 << 8,
-	LOCKEXI_ER = 1 << 9
+	LOCKEXI_ER = 1 << 9,
+	WRONGAC_ER = 1 << 10,
+	MLXLOAD_ER = 1 << 11
 }	t_flags;
+
+/* System Dependant Macros: */
+# ifdef __linux__
+#  define KEY_ESC	65307
+#  define KEY_W		119
+#  define KEY_A		97
+#  define KEY_S		115
+#  define KEY_D		100
+#  define KEY_UP	65362
+#  define KEY_LEFT	65361
+#  define KEY_DOWN	65364
+#  define KEY_RIGHT	65363
+#  define LIN_FLAG	1
+
+# elif __APPLE__
+#  define KEY_ESC	53
+#  define KEY_W		13
+#  define KEY_A		0
+#  define KEY_S		1
+#  define KEY_D		2
+#  define KEY_UP	126 
+#  define KEY_LEFT	123 
+#  define KEY_DOWN	125
+#  define KEY_RIGHT	124 
+#  define LIN_FLAG	0
+# endif
 
 /* Macros: */
 # define TILE_SIZE 48
+# define MAP_ASSETS "!%@$aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpPQRSTUvVwWxXyYzZ#"
 
 /* Functions: */
+// Pre-game functions:
 void	ft_valid_map(t_game *game);
-void	ft_detail_map(t_game *game);
+
+// Boot functions:
+void	ft_boot_map(t_game *game);
+void	ft_boot_mlx(t_game *game);
+void	ft_boot_assets(t_game *game);
+void	ft_detail_map(t_map *map);
+
+// Exit functions:
+void	ft_exit_game(t_game *game);
+
+// Error management:
+void	ft_resolve_error(int mask);
+
+// Draw functions:
 void	ft_draw_map(t_game *game);
 #endif

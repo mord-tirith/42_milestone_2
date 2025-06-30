@@ -1,16 +1,13 @@
+=== start of printer.c ===
 
+#include "error_lib.h"
 #include "so_long.h"
-#include <stdlib.h>
+#include <stdio.h>
 
-
-static void	print_mlx_errors(int mask)
+void	ft_resolve_error(int mask)
 {
-	if (mask & MLXLOAD_ER)
-		ft_printf("%s\n", "mlx failed to instantiate window");
-}
-
-static void	print_error(int mask)
-{
+	if (!mask)
+		return ;
 	ft_printf("Error\n");
 	if (mask & MALLOCS_ER)
 		ft_printf("%s\n", "Malloc failure");
@@ -32,12 +29,7 @@ static void	print_error(int mask)
 		ft_printf("%s\n", "Unreacheable coin detected");
 	if (mask & LOCKEXI_ER)
 		ft_printf("%s\n", "Unreacheable exit detected");
-	print_mlx_errors(mask);
 }
 
-void	ft_resolve_error(int mask)
-{
-	if (mask)
-		print_error(mask);
-	exit(mask);
-}
+
+=== end of printer.c ===

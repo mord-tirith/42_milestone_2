@@ -1,7 +1,32 @@
 
 #include "so_long.h"
 #include "parse_lib.h"
+#include <stddef.h>
 #include <stdlib.h>
+
+static void	free2d(char **arr)
+{
+	int	i;
+
+	i = 0;
+	while (arr[i])
+	{
+		free(arr[i]);
+		i++;
+	}
+	free(arr);
+}
+
+static void	deboot_validators(t_validators *v)
+{
+	if (v->arr)
+		v->arr = NULL;
+	if (v->coin_map)
+		free2d(v->coin_map);
+	if (v->exit_map)
+		free2d(v->exit_map);
+	free(v);
+}
 
 static t_validators	*boot_validators(t_game *game)
 {
@@ -25,9 +50,11 @@ void	ft_valid_map(t_game *game)
 {
 	t_validators	*v;
 
+	ft_file_check(game);
+	if (game->error_bitmask)
+		return ;
 	v = boot_validators(game);
-
-	if (!v)
+	if (v)
 	{
 	ft_uniques(v);
 	ft_check_ones(v);
@@ -36,4 +63,5 @@ void	ft_valid_map(t_game *game)
 	}
 	else
 		game->error_bitmask |= MALLOCS_ER;
+	deboot_validators(v);
 }

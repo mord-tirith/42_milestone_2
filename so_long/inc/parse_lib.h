@@ -30,5 +30,6 @@ typedef struct s_validators
 void	ft_uniques(t_validators *v);
 void	ft_flood_map(t_validators *v);
 void	ft_check_ones(t_validators *v);
+void	ft_file_check(t_game *game);
 
 #endif

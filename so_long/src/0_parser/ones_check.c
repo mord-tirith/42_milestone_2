@@ -28,11 +28,13 @@ static int	top_and_bottom(t_validators *v)
 static int	sides(t_validators *v)
 {
 	int	i;
+	int	x;
 
 	i = 1;
 	while (i < v->y)
 	{
-		if (v->arr[i][0] != '1' || v->arr[i][v->x - 1] != '1')
+		x = ft_strlen(v->arr[i]);
+		if (v->arr[i][0] != '1' || v->arr[i][x - 1] != '1')
 			return (0);
 		i++;
 	}

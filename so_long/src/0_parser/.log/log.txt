@@ -97,61 +97,121 @@ void	ft_flood_map(t_validators *v)
 		v->error_mask |= LOCKEXI_ER;
 }
 === end of flood_fill.c ===
-=== start of main.c ===
+=== start of load_map.c ===
+
 #include "parse_lib.h"
 #include "so_long.h"
+#include <stddef.h>
 #include <stdio.h>
-#include <stdlib.h>
+#include <fcntl.h>
 
-int main()
+static int	map_height(char *file)
 {
-	char **map = malloc(sizeof(char *) * 10);
+	int		map_size;
+	int		fd;
+	char	buffer;
 
-	for (int i = 0; i < 9; i++)
-		map[i] = malloc(6);
-	map[0] = ft_strdup("1111");
-	map[1] = ft_strdup("11P11");
-	map[2] = ft_strdup("10101");
-	map[3] = ft_strdup("10001");
-	map[4] = ft_strdup("10001");
-	map[5] = ft_strdup("100E1");
-	map[6] = ft_strdup("10101");
-	map[7] = ft_strdup("10001");
-	map[8] = ft_strdup("11101");
-	map[9] = NULL;
-	t_game g;
-	g.map->arr = map;
-	int x = ft_valid_map(&g);
-
-	if (!x)
-		printf("Valid map!\n");
-	if (x >> 0 & 1)
-		printf("Malloc error\n");
-	if (x >> 1 & 1)
-		printf("Map file error\n");
-	if (x >> 2 & 1)
-		printf("Inconsistent x values error\n");
-	if (x >> 3 & 1)
-		printf("Multiple players\n");
-	if (x >> 4 & 1)
-		printf("Multiple exits\n");
-	if (x >> 5 & 1)
-		printf("Not enclosed by 1s\n");
-	if (x >> 6 & 1)
-		printf("No coins\n");
-	if (x >> 7 & 1)
-		printf("Unreacheable coin\n");
-	if (x >> 8 & 1)
-		printf("Unreacheable exit\n");
-
-
-	printf("%d", x);
+	map_size = -1;
+	fd = open(file, O_RDONLY);
+	if (fd >= 0)
+	{
+		map_size = 0;
+		while (read(fd, &buffer, 1) > 0)
+		{
+			if (buffer == '\n')
+				map_size++;
+		}
+		close(fd);
+	}
+	return (map_size);
 }
-=== end of main.c ===
+
+static char **snip_slash_ns(char **map)
+{
+	int	y;
+	int	x;
+
+	if (!map)
+		return (NULL);
+	y = 0;
+	while (map[y])
+	{
+		x = 0;
+		while (map[y][x])
+		{
+			if (map[y][x] == '\n')
+				map[y][x] = '\0';
+			x++;
+		}
+		y++;
+	}
+	return (map);
+}
+
+static char **load_map(char *file)
+{
+	int		fd;
+	int		i;
+	char	*temp;
+	char	**map;
+
+	i = map_height(file);
+	if (i < 0)
+		return (NULL);
+	fd = open(file, O_RDONLY);
+	if (fd >= 0)
+	{
+		map = ft_calloc(i + 1, sizeof(char *));
+		if (!map)
+			return (NULL);
+		i = 0;
+		temp = get_next_line(fd);
+		while (temp)
+		{
+			map[i] = temp;
+			temp = get_next_line(fd);
+			i++;
+		}
+	}
+	return (snip_slash_ns(map));
+}
+
+static int	is_ber(char *file)
+{
+	size_t	size;
+
+	size = ft_strlen(file);
+	if (size >= 4)
+	{
+		if (!ft_strncmp(file + (size - 4), ".ber", 4))
+			return (1);
+	}
+	return (0);
+}
+
+void	ft_file_check(t_game *game)
+{
+	int	fd;
+
+	fd = open(game->assets.map_file, O_RDONLY);
+	if (fd >= 0)
+	{
+		close(fd);
+		if (!is_ber(game->assets.map_file))
+			game->error_bitmask |= BERFILE_ER;
+		game->map.layout = load_map(game->assets.map_file);
+		if (game->map.layout)
+			return ;
+	}
+	game->error_bitmask |= MAPFILE_ER;
+}
+
+=== end of load_map.c ===
 === start of maparse.c ===
 
 #include "so_long.h"
 #include "parse_lib.h"
+#include <stddef.h>
 #include <stdlib.h>
 
 static t_validators	*boot_validators(t_game *game)
@@ -168,23 +228,27 @@ static t_validators	*boot_validators(t_game *game)
 	v->x = 0;
 	v->y = 0;
 	v->flood = 0;
-	v->arr = game->map->arr;
+	v->arr = game->map.layout;
 	return (v);
 }
 
-int	ft_valid_map(t_game *game)
+void	ft_valid_map(t_game *game)
 {
 	t_validators	*v;
 
+	ft_file_check(game);
+	if (game->error_bitmask)
+		return ;
 	v = boot_validators(game);
-
-	if (!v)
-		return (MALLOCS_ER);
+	if (v)
+	{
 	ft_uniques(v);
 	ft_check_ones(v);
 	ft_flood_map(v);
-	
-	return (v->error_mask);
+	game->error_bitmask |= v->error_mask;
+	}
+	else
+		game->error_bitmask |= MALLOCS_ER;
 }
 === end of maparse.c ===
 === start of ones_check.c ===
@@ -218,11 +282,13 @@ static int	top_and_bottom(t_validators *v)
 static int	sides(t_validators *v)
 {
 	int	i;
+	int	x;
 
 	i = 1;
 	while (i < v->y)
 	{
-		if (v->arr[i][0] != '1' || v->arr[i][v->x - 1] != '1')
+		x = ft_strlen(v->arr[i]);
+		if (v->arr[i][0] != '1' || v->arr[i][x - 1] != '1')
 			return (0);
 		i++;
 	}
@@ -240,81 +306,6 @@ void	ft_check_ones(t_validators *v)
 		v->error_mask |= OPENWAL_ER;
 }
 === end of ones_check.c ===
-=== start of parse_lib.h ===
-
-#ifndef PARSE_LIB_H
-# define PARSE_LIB_H
-
-/* Includes: */
-# include "so_long.h"
-# include <stdlib.h>
-
-/* Types: */
-
-typedef struct s_validators
-{
-	int				flood;
-	char			**arr;
-	char			**coin_map;
-	char			**exit_map;
-	unsigned int	error_mask;
-	unsigned int	player;
-	unsigned int	exit;
-	unsigned int	coins;
-	unsigned int	x;
-	unsigned int	y;
-	unsigned int	p_x;
-	unsigned int	p_y;
-}	t_validators;
-
-/* Macros: */
-// Exit Status Faux-Bitmask
-# define SUCCESSFUL 0
-# define MALLOCS_ER 1
-# define MAPFILE_ER 2
-# define X_VALUE_ER 4
-# define PLAYERS_ER 8
-# define EXITPLU_ER 16
-# define OPENWAL_ER 32
-# define NOCOINS_ER 64
-# define LOCKOIN_ER 128
-# define LOCKEXI_ER 256
-
-/* Functions: */
-void	ft_uniques(t_validators *v);
-void	ft_flood_map(t_validators *v);
-void	ft_check_ones(t_validators *v);
-
-#endif
-=== end of parse_lib.h ===
-=== start of so_long.h ===
-
-#ifndef SO_LONG_H
-# define SO_LONG_H
-
-/* Global Includes: */
-# include "../../.libft/inc/libftpp.h"
-
-/* Types: */
-
-typedef struct s_map
-{
-	int		x;
-	int		y;
-	char	**arr;
-}	t_map;
-
-typedef struct s_game
-{
-	void	*mlx;
-	void	*win;
-	t_map	*map;
-}	t_game;
-
-/* Functions: */
-int	ft_valid_map(t_game *game);
-#endif
-=== end of so_long.h ===
 === start of unique_symbols.c ===
 
 #include "parse_lib.h"
@@ -395,7 +386,7 @@ static int	valid_x(t_validators *v)
 	v->x = ft_strlen(v->arr[0]);
 	while (v->arr[i])
 	{
-		if (ft_strlen(v->arr[i]) != v->x)
+		if ((int)ft_strlen(v->arr[i]) != v->x)
 		{
 			v->error_mask |= X_VALUE_ER;
 			return (0);

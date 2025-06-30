@@ -32,7 +32,7 @@ static int	exit_flood(int y, int x, t_validators *v)
 	exit_flood(y, x - 1, v));
 }
 
-static char	**bad_arr(t_validators *v)
+static char	**clean_arr(t_validators *v)
 {
 	if (v->coin_map)
 	{
@@ -63,13 +63,13 @@ static char	**clone_arr(t_validators *v)
 
 	new_arr = ft_calloc(v->y + 1, sizeof(char *));
 	if (!new_arr)
-		return (bad_arr(v));
+		return (clean_arr(v));
 	i = 0;
 	while (v->arr[i])
 	{
 		new_arr[i] = ft_strdup(v->arr[i]);
 		if (!new_arr[i])
-			return (bad_arr(v));
+			return (clean_arr(v));
 		i++;
 	}
 	return (new_arr);
@@ -83,7 +83,7 @@ void	ft_flood_map(t_validators *v)
 	v->exit_map = clone_arr(v);
 	if (!v->coin_map || !v->exit_map)
 	{
-		bad_arr(v);
+		clean_arr(v);
 		return ;
 	}
 	if (v->coin_map)

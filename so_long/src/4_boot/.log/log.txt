@@ -1,0 +1,77 @@
+=== start of assets_boot.c ===
+
+#include "so_long.h"
+
+static void	boot_a_player(t_game *game)
+{
+	return ;
+}
+
+static void	boot_a_map(t_game *game)
+{
+	int		i;
+	int		hw;
+	char	*path;
+
+	i = 0;
+	path = ft_strdup("./assets/map/ .xpm");
+	if (!path)
+		return ;
+	while (MAP_ASSETS[i])
+	{
+		path[13] = MAP_ASSETS[i];
+		game->assets.a_map[(int)MAP_ASSETS[i]] = mlx_xpm_file_to_image(
+			game->mlx, path, &hw, &hw);
+		i++;
+	}
+	free(path);
+}
+
+void	ft_boot_assets(t_game *game)
+{
+	boot_a_map(game);
+}
+=== end of assets_boot.c ===
+=== start of map_boot.c ===
+
+#include "so_long.h"
+
+void	ft_boot_map(t_game *game)
+{
+	int		i;
+	t_map	*map;
+
+	map = &game->map;
+	i = 0;
+	while (map->arr[0][i])
+		i++;
+	map->x = i;
+	i = 0;
+	while (map->arr[i])
+		i++;
+	map->y = i;
+	ft_detail_map(map);
+}
+=== end of map_boot.c ===
+=== start of mlx_boot.c ===
+
+#include "so_long.h"
+
+void	ft_boot_mlx(t_game *game)
+{
+	int	x;
+	int	y;
+
+	game->mlx = mlx_init();
+	if (!game->mlx)
+	{
+		game->error_bitmask |= MLXLOAD_ER;
+		return ;
+	}
+	x = game->map.x * TILE_SIZE;
+	y = game->map.y * TILE_SIZE;
+	game->win = mlx_new_window(game->mlx, x, y, "So Long");
+	if (!game->win)
+		game->error_bitmask |= MLXLOAD_ER;
+}
+=== end of mlx_boot.c ===

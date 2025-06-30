@@ -13,19 +13,25 @@ INC_DIR = inc/
 MLX_DIR = minilibx-linux/
 
 # File Variables:
-
-
-MAP_FILES =	draw_map.c reboot_map.c translate_walls.c
-MAPPER		=	$(addprefix 2_mapper/, $(MAP_FILES))
+PAR_FILES	= flood_fill.c load_map.c maparse.c ones_check.c unique_symbols.c
+PARSER		= $(addprefix 0_parser/, $(PAR_FILES))
 
 ERR_FILES = printer.c
 ERRORS		= $(addprefix 1_error/, $(ERR_FILES))
 
-PAR_FILES	= flood_fill.c maparse.c ones_check.c unique_symbols.c
-PARSER		= $(addprefix 0_parser/, $(PAR_FILES))
+MAP_FILES = reboot_map.c translate_walls.c
+MAPPER		=	$(addprefix 2_mapper/, $(MAP_FILES))
 
+GAM_FILES = draw_map.c input_control.c so_long.c
+GAME			= $(addprefix 3_game/, $(GAM_FILES))
 
-SRC_FILES	= $(MAPPER) $(ERRORS) $(PARSER)
+BOT_FILES = assets_boot.c map_boot.c mlx_boot.c
+BOOT			= $(addprefix 4_boot/, $(BOT_FILES))
+
+CLE_FILES	= cleaner.c
+CLEANUP		= $(addprefix 5_cleanup/, $(CLE_FILES))
+
+SRC_FILES	= $(PARSER) $(ERRORS) $(MAPPER) $(GAME) $(BOOT) $(CLEANUP)
 SRC				= $(addprefix $(SRC_DIR), $(SRC_FILES))
 OBJ				:= $(patsubst $(SRC_DIR)%.c, $(OBJ_DIR)%.o, $(SRC))
 
@@ -33,7 +39,7 @@ OBJ				:= $(patsubst $(SRC_DIR)%.c, $(OBJ_DIR)%.o, $(SRC))
 # Compiler Variables:
 CC				= cc
 CFLAGS		= -Wall -Wextra -Werror -g
-MLX_FLAGS	= -L$(MLX_DIR) -lmlx -lXext -lX11 -lm
+MLX_FLAGS	= -L$(MLX_DIR) -lmlx -lXext -lX11 -lm -lz
 LIBFT			= ./.libft/libft.a
 
 ####################
