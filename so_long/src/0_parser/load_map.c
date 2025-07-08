@@ -8,19 +8,24 @@ static int	map_height(char *file)
 {
 	int		map_size;
 	int		fd;
+	int		notempty;
 	char	buffer;
 
 	map_size = -1;
+	notempty = 0;
 	fd = open(file, O_RDONLY);
 	if (fd >= 0)
 	{
 		map_size = 0;
 		while (read(fd, &buffer, 1) > 0)
 		{
+			notempty = 1;
 			if (buffer == '\n')
 				map_size++;
 		}
 		close(fd);
+		if (notempty)
+			map_size++;
 	}
 	return (map_size);
 }
@@ -64,14 +69,14 @@ static char **load_map(char *file)
 		map = ft_calloc(i + 1, sizeof(char *));
 		if (!map)
 			return (NULL);
-		i = 0;
+		i = -1;
 		temp = get_next_line(fd);
 		while (temp)
 		{
-			map[i] = temp;
+			map[++i] = temp;
 			temp = get_next_line(fd);
-			i++;
 		}
+		close(fd);
 	}
 	return (snip_slash_ns(map));
 }

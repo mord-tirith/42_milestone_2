@@ -1,0 +1,384 @@
+=== start of ft_cs.c ===
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   ft_cs.c                                            :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: thenriqu <thenriqu@student.42porto.com>    +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2025/04/24 08:30:25 by thenriqu          #+#    #+#             */
+/*   Updated: 2025/04/28 13:26:46 by thenriqu         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
+#include "ft_printf.h"
+#include <stddef.h>
+#include <unistd.h>
+
+void	ft_print_c(int c, t_stream *s)
+{
+	if (s->fd >= 0)
+	{
+		write(s->fd, &c, 1);
+		s->pos += 1;
+	}
+	else
+		s->buffer[s->pos++] = c;
+}
+
+void	ft_print_s(char *str, t_stream *s)
+{
+	if (!str)
+		return (ft_print_s("(null)", s));
+	while (*str)
+	{
+		ft_print_c(*str, s);
+		str++;
+	}
+}
+=== end of ft_cs.c ===
+=== start of ft_idu.c ===
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   ft_idu.c                                           :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: thenriqu <thenriqu@student.42porto.com>    +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2025/04/24 09:25:16 by thenriqu          #+#    #+#             */
+/*   Updated: 2025/04/28 13:27:01 by thenriqu         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
+#include "ft_printf.h"
+
+static int	ft_digicount(unsigned int n)
+{
+	int	count;
+
+	count = 0;
+	if (!n)
+		return (1);
+	while (n)
+	{
+		count++;
+		n /= 10;
+	}
+	return (count);
+}
+
+void	ft_print_di(int n, t_stream *s)
+{
+	char			number[12];
+	unsigned int	num;
+	int				pos;
+
+	pos = ft_digicount((n * ((n > 0) - (n < 0))));
+	if (n < 0)
+	{
+		pos++;
+		number[0] = '-';
+		num = -n;
+	}
+	else
+		num = n;
+	number[pos] = '\0';
+	while (num)
+	{
+		number[pos - 1] = (num % 10) + '0';
+		num /= 10;
+		pos--;
+	}
+	if (!n)
+		number[0] = '0';
+	ft_print_s(number, s);
+}
+
+void	ft_print_u(unsigned int n, t_stream *s)
+{
+	char	number[11];
+	int		pos;
+
+	if (!n)
+	{
+		ft_print_c('0', s);
+		return ;
+	}
+	pos = ft_digicount(n);
+	number[pos] = '\0';
+	while (n)
+	{
+		number[pos - 1] = (n % 10) + '0';
+		pos--;
+		n /= 10;
+	}
+	ft_print_s(number, s);
+}
+=== end of ft_idu.c ===
+=== start of ft_printf.h ===
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   ft_printf.h                                        :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: thenriqu <thenriqu@student.42porto.com>    +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2025/04/24 08:05:49 by thenriqu          #+#    #+#             */
+/*   Updated: 2025/04/30 13:55:31 by thenriqu         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
+#ifndef FT_PRINTF_H
+# define FT_PRINTF_H
+
+/* Includes: */
+# include <stdarg.h>
+# include <stddef.h>
+
+/* Types: */
+typedef struct s_stream
+{
+	int		fd;
+	char	*buffer;
+	size_t	pos;
+	size_t	lim;
+}	t_stream;
+
+/* Functions: */
+// Main
+int		ft_printf(const char *format, ...);
+int		ft_perror(const char *format, ...);
+int		ft_pfile(int fd, const char *format, ...);
+int		ft_sprintf(char *buffer, size_t lim, const char *format, ...);
+
+// Helpers
+int		ft_validate(char c);
+void	ft_printer(const char *format, va_list args, t_stream *s);
+void	ft_parsel(char spec, va_list arg, t_stream *s);
+void	ft_print_c(int c, t_stream *s);
+void	ft_print_s(char *str, t_stream *s);
+void	ft_print_di(int n, t_stream *s);
+void	ft_print_u(unsigned int n, t_stream *s);
+void	ft_print_x(unsigned int n, char mode, t_stream *s);
+void	ft_print_p(void *ptr, t_stream *s);
+
+#endif
+=== end of ft_printf.h ===
+=== start of ft_xp.c ===
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   ft_xp.c                                            :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: thenriqu <thenriqu@student.42porto.com>    +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2025/04/24 09:46:04 by thenriqu          #+#    #+#             */
+/*   Updated: 2025/04/30 13:55:42 by thenriqu         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
+#include "ft_printf.h"
+
+static int	ft_hex_digicount(unsigned long n)
+{
+	int	count;
+
+	count = 0;
+	if (!n)
+		count++;
+	while (n)
+	{
+		count++;
+		n /= 16;
+	}
+	return (count);
+}
+
+void	ft_print_x(unsigned int n, char mode, t_stream *s)
+{
+	char	*hex;
+	char	number[9];
+	int		pos;
+
+	if (mode == 'u')
+		hex = "0123456789ABCDEF";
+	else
+		hex = "0123456789abcdef";
+	pos = ft_hex_digicount(n);
+	number[pos] = '\0';
+	if (!n)
+		number[0] = '0';
+	while (n)
+	{
+		number[pos - 1] = hex[n % 16];
+		n /= 16;
+		pos--;
+	}
+	ft_print_s(number, s);
+}
+
+void	ft_print_p(void *ptr, t_stream *s)
+{
+	int				pos;
+	char			*hex;
+	char			pointer[17];
+	unsigned long	n;
+
+	if (!ptr)
+	{
+		ft_print_s("(nil)", s);
+		return ;
+	}
+	hex = "0123456789abcdef";
+	n = (unsigned long)ptr;
+	pos = ft_hex_digicount(n);
+	pointer[pos] = '\0';
+	while (n)
+	{
+		pointer[pos - 1] = hex[n % 16];
+		n /= 16;
+		pos--;
+	}
+	ft_print_s("0x", s);
+	ft_print_s(pointer, s);
+}
+=== end of ft_xp.c ===
+=== start of functions.c ===
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   ft_printf.c                                        :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: thenriqu <thenriqu@student.42porto.com>    +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2025/04/24 08:17:35 by thenriqu          #+#    #+#             */
+/*   Updated: 2025/04/28 13:27:13 by thenriqu         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
+#include "ft_printf.h"
+#include <stdint.h>
+#include <stdio.h>
+
+int	ft_printf(const char *format, ...)
+{
+	va_list		args;
+	t_stream	s;
+
+	va_start(args, format);
+	s.buffer = NULL;
+	s.fd = 1;
+	s.lim = SIZE_MAX;
+	s.pos = 0;
+	ft_printer(format, args, &s);
+	return (s.pos);
+}
+
+int	ft_perror(const char *format, ...)
+{
+	va_list		args;
+	t_stream	s;
+
+	va_start(args, format);
+	s.buffer = NULL;
+	s.fd = 2;
+	s.lim = SIZE_MAX;
+	s.pos = 0;
+	ft_printer(format, args, &s);
+	return (s.pos);
+}
+
+int ft_pfile(int fd, const char *format, ...)
+{
+	va_list		args;
+	t_stream	s;
+
+	va_start(args, format);
+	s.buffer = NULL;
+	s.fd = fd;
+	s.lim = SIZE_MAX;
+	s.pos = 0;
+	ft_printer(format, args, &s);
+	return (s.pos);
+}
+
+int	ft_sprintf(char *buffer, size_t lim, const char *format, ...)
+{
+	va_list		args;
+	t_stream	s;
+
+	va_start(args, format);
+	s.buffer = buffer;
+	s.fd = -1;
+	s.lim = lim;
+	s.pos = 0;
+	ft_printer(format, args, &s);
+	s.pos++;
+	s.buffer[s.pos] = '\0';
+	return (s.pos);
+}
+=== end of functions.c ===
+=== start of printer.c ===
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   printer.c                                          :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: thenriqu <thenriqu@student.42porto.com>    +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2025/07/06 13:38:23 by thenriqu          #+#    #+#             */
+/*   Updated: 2025/07/06 13:52:34 by thenriqu         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
+#include "ft_printf.h"
+
+void	ft_parsel(char spec, va_list arg, t_stream *s)
+{
+	if (spec == '%')
+		ft_print_c('%', s);
+	if (spec == 'c')
+		ft_print_c(va_arg(arg, int), s);
+	if (spec == 's')
+		ft_print_s(va_arg(arg, char *), s);
+	if (spec == 'd' || spec == 'i')
+		ft_print_di(va_arg(arg, int), s);
+	if (spec == 'u')
+		ft_print_u(va_arg(arg, unsigned int), s);
+	if (spec == 'x')
+		ft_print_x(va_arg(arg, unsigned int), 'l', s);
+	if (spec == 'X')
+		ft_print_x(va_arg(arg, unsigned int), 'u', s);
+	if (spec == 'p')
+		ft_print_p(va_arg(arg, void *), s);
+}
+
+int	ft_validate(char c)
+{
+	char	*valid_input;
+
+	valid_input = "cspdiuxX%";
+	while (*valid_input)
+	{
+		if (c == *valid_input)
+			return (1);
+		valid_input++;
+	}
+	return (0);
+}
+
+void	ft_printer(const char *format, va_list args, t_stream *s)
+{
+	while (*format && (s->pos < s->lim))
+	{
+		if (*format == '%' && ft_validate(*(format + 1)))
+		{
+			format++;
+			ft_parsel(*format, args, s);
+		}
+		else
+			ft_print_c(*format, s);
+		format++;
+	}
+}
+=== end of printer.c ===

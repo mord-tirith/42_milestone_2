@@ -59,6 +59,7 @@ void	ft_valid_map(t_game *game)
 	ft_uniques(v);
 	ft_check_ones(v);
 	ft_flood_map(v);
+	game->map.y = v->y;
 	game->error_bitmask |= v->error_mask;
 	}
 	else

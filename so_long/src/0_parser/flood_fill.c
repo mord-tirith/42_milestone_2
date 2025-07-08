@@ -34,23 +34,23 @@ static int	exit_flood(int y, int x, t_validators *v)
 
 static char	**clean_arr(t_validators *v)
 {
+	int	i;
+
 	if (v->coin_map)
 	{
-		while (*(v->coin_map))
-		{
-			free(*(v->coin_map));
-			v->coin_map += 1;
-		}
+		i = -1;
+		while (v->coin_map[++i])
+			free(v->coin_map[i]);
 		free(v->coin_map);
+		v->coin_map = NULL;
 	}
 	if (v->exit_map)
 	{
-		while (*(v->exit_map))
-		{
-			free(*(v->exit_map));
-			v->exit_map += 1;
-		}
+		i = -1;
+		while (v->exit_map[++i])
+			free(v->exit_map[i]);
 		free(v->exit_map);
+		v->exit_map = NULL;
 	}
 	v->error_mask |= MALLOCS_ER;
 	return (NULL);

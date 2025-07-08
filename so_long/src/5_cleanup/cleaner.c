@@ -24,14 +24,14 @@ static void	free_sprite_assets(t_game *game)
 }
 */
 
-static void	free_2d_array(char **arr)
+static void	free_2d_array(char **arr, int y)
 {
 	int	i;
 
 	if (!arr)
 		return ;
 	i = 0;
-	while (arr[i])
+	while (i < y)
 	{
 		free(arr[i]);
 		i++;
@@ -44,8 +44,8 @@ void	ft_exit_game(t_game *game)
 	int	mask;
 
 	mask = game->error_bitmask;
-	free_2d_array(game->map.arr);
-	free_2d_array(game->map.layout);
+	free_2d_array(game->map.arr, game->map.y);
+	free_2d_array(game->map.layout, game->map.y);
 	free_map_assets(game);
 	//free_sprite_assets(game);
 	if (game->win)

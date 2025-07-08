@@ -2,10 +2,12 @@
 
 #include "so_long.h"
 
+/*
 static void	boot_a_player(t_game *game)
 {
 	return ;
 }
+*/
 
 static void	boot_a_map(t_game *game)
 {
@@ -43,11 +45,11 @@ void	ft_boot_map(t_game *game)
 
 	map = &game->map;
 	i = 0;
-	while (map->arr[0][i])
+	while (map->layout[0][i])
 		i++;
 	map->x = i;
 	i = 0;
-	while (map->arr[i])
+	while (map->layout[i])
 		i++;
 	map->y = i;
 	ft_detail_map(map);

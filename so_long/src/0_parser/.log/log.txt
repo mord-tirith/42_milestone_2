@@ -33,25 +33,25 @@ static int	exit_flood(int y, int x, t_validators *v)
 	exit_flood(y, x - 1, v));
 }
 
-static char	**bad_arr(t_validators *v)
+static char	**clean_arr(t_validators *v)
 {
+	int	i;
+
 	if (v->coin_map)
 	{
-		while (*(v->coin_map))
-		{
-			free(*(v->coin_map));
-			v->coin_map += 1;
-		}
+		i = -1;
+		while (v->coin_map[++i])
+			free(v->coin_map[i]);
 		free(v->coin_map);
+		v->coin_map = NULL;
 	}
 	if (v->exit_map)
 	{
-		while (*(v->exit_map))
-		{
-			free(*(v->exit_map));
-			v->exit_map += 1;
-		}
+		i = -1;
+		while (v->exit_map[++i])
+			free(v->exit_map[i]);
 		free(v->exit_map);
+		v->exit_map = NULL;
 	}
 	v->error_mask |= MALLOCS_ER;
 	return (NULL);
@@ -64,13 +64,13 @@ static char	**clone_arr(t_validators *v)
 
 	new_arr = ft_calloc(v->y + 1, sizeof(char *));
 	if (!new_arr)
-		return (bad_arr(v));
+		return (clean_arr(v));
 	i = 0;
 	while (v->arr[i])
 	{
 		new_arr[i] = ft_strdup(v->arr[i]);
 		if (!new_arr[i])
-			return (bad_arr(v));
+			return (clean_arr(v));
 		i++;
 	}
 	return (new_arr);
@@ -84,7 +84,7 @@ void	ft_flood_map(t_validators *v)
 	v->exit_map = clone_arr(v);
 	if (!v->coin_map || !v->exit_map)
 	{
-		bad_arr(v);
+		clean_arr(v);
 		return ;
 	}
 	if (v->coin_map)
@@ -100,28 +100,32 @@ void	ft_flood_map(t_validators *v)
 === start of load_map.c ===
 
 #include "parse_lib.h"
-#include "so_long.h"
 #include <stddef.h>
-#include <stdio.h>
+#include <unistd.h>
 #include <fcntl.h>
 
 static int	map_height(char *file)
 {
 	int		map_size;
 	int		fd;
+	int		notempty;
 	char	buffer;
 
 	map_size = -1;
+	notempty = 0;
 	fd = open(file, O_RDONLY);
 	if (fd >= 0)
 	{
 		map_size = 0;
 		while (read(fd, &buffer, 1) > 0)
 		{
+			notempty = 1;
 			if (buffer == '\n')
 				map_size++;
 		}
 		close(fd);
+		if (notempty)
+			map_size++;
 	}
 	return (map_size);
 }
@@ -156,6 +160,7 @@ static char **load_map(char *file)
 	char	**map;
 
 	i = map_height(file);
+	map = NULL;
 	if (i < 0)
 		return (NULL);
 	fd = open(file, O_RDONLY);
@@ -214,6 +219,30 @@ void	ft_file_check(t_game *game)
 #include <stddef.h>
 #include <stdlib.h>
 
+static void	free2d(char **arr)
+{
+	int	i;
+
+	i = 0;
+	while (arr[i])
+	{
+		free(arr[i]);
+		i++;
+	}
+	free(arr);
+}
+
+static void	deboot_validators(t_validators *v)
+{
+	if (v->arr)
+		v->arr = NULL;
+	if (v->coin_map)
+		free2d(v->coin_map);
+	if (v->exit_map)
+		free2d(v->exit_map);
+	free(v);
+}
+
 static t_validators	*boot_validators(t_game *game)
 {
 	t_validators	*v;
@@ -245,10 +274,12 @@ void	ft_valid_map(t_game *game)
 	ft_uniques(v);
 	ft_check_ones(v);
 	ft_flood_map(v);
+	game->map.y = v->y;
 	game->error_bitmask |= v->error_mask;
 	}
 	else
 		game->error_bitmask |= MALLOCS_ER;
+	deboot_validators(v);
 }
 === end of maparse.c ===
 === start of ones_check.c ===

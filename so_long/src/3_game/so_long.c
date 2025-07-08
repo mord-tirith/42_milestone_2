@@ -18,7 +18,7 @@ int	main(int ac, char **av)
 	ft_boot_mlx(game);
 	ft_boot_assets(game);
 	if (game->error_bitmask)
-		ft_resolve_error(game->error_bitmask);
+		ft_exit_game(game);
 	ft_draw_map(game);
 	mlx_key_hook(game->win, ft_keys_hook, &game);
 	mlx_hook(game->win, 17, 0, (void *)ft_exit_game, game);

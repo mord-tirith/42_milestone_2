@@ -28,7 +28,16 @@ static void	boot_a_map(t_game *game)
 	free(path);
 }
 
+#include <stdlib.h>
+
 void	ft_boot_assets(t_game *game)
 {
+	int	i = 0;
+
+	while (i < 128)
+	{
+		game->assets.a_map[i] = NULL;
+		i++;
+	}
 	boot_a_map(game);
 }
