@@ -5,12 +5,14 @@
 #######################
 
 #	Basic Variables:
-NAME		= so_long
-PNAME		= So Long
-SRC_DIR = src/
-OBJ_DIR = .obj/
-INC_DIR = inc/
-MLX_DIR = minilibx-linux/
+NAME				= so_long
+PNAME				= So Long
+SRC_DIR			= src/
+BON_DIR			= bonus_src/
+BON_OBJ_DIR = .bonus_obj/
+OBJ_DIR			= .obj/
+INC_DIR			= inc/
+MLX_DIR			= minilibx-linux/
 
 # File Variables:
 PAR_FILES	= file.c flood.c maparse.c ones.c uniques.c
@@ -31,6 +33,10 @@ GAME			= $(addprefix 4_game/, $(GAM_FILES))
 SRC_FILES	= $(PARSER) $(BOOT) $(DRAW) $(GAME) 
 SRC				= $(addprefix $(SRC_DIR), $(SRC_FILES))
 OBJ				:= $(patsubst $(SRC_DIR)%.c, $(OBJ_DIR)%.o, $(SRC))
+
+BON_FILES	= main.c 
+BONUS_SRC	= $(addprefix $(BON_DIR), $(BON_FILES))
+BONUS_OBJ	:= $(patsubst $(BON_DIR)%.c, $(BON_OBJ_DIR)%.o, $(BONUS_SRC))
 
 
 # Compiler Variables:
@@ -61,7 +67,7 @@ MAKEFLAGS += --no-print-directory
 #  ▌ ▙▌▐▖▙▖▄▌  #
 ################
 
-.PHONY: all true_all clean fclean re clean_install banner mlx
+.PHONY: all true_all clean fclean re clean_install banner mlx bonus
 
 all:
 	@if make -q true_all; then \
@@ -71,6 +77,16 @@ all:
 	fi
 
 true_all: $(NAME)
+
+bonus: $(BONUS_OBJ)
+	@if make -q bonus; then \
+		echo "${BLUE}${PNAME} bonus already up to date${RESET}"; \
+		else \
+			make banner; \
+			make mlx; \
+			make libft.a; \
+			$(CC) $(CFLAGS) -o so_long_bonus $(BONUS_OBJ) $(MLX_FLAGS) $(LIBFT); \
+	fi
 
 $(NAME): $(OBJ)
 	@make banner
@@ -94,6 +110,10 @@ libft.a:
 	@echo "${BLUE} Libft++ installed${RESET}"
 
 $(OBJ_DIR)%.o: $(SRC_DIR)%.c
+	@mkdir -p $(dir $@)
+	@$(CC) $(CFLAGS) -I$(INC_DIR) -c $< -o $@
+
+$(BON_OBJ_DIR)%.o: $(BON_DIR)%.c
 	@mkdir -p $(dir $@)
 	@$(CC) $(CFLAGS) -I$(INC_DIR) -c $< -o $@
 

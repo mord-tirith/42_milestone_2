@@ -109,7 +109,7 @@ typedef enum e_flags
 
 /* Macros: */
 # define GAME_NAME "so_long"
-# define TILE_SIZE 48
+# define TILE_SIZE 64
 # define MAP_ASSETS "!%@$aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpPQRSTUvVwWxXyYzZ#"
 # define ASSET_ERROR -1
 
