@@ -74,4 +74,7 @@ void	ft_boot_map(t_game *game)
 	while (game->map->layout[i])
 		i++;
 	game->map->y = i;
+	ft_detail_map(game->map);
+	if (!game->map->arr)
+		game->error_bitmask |= MALLOCS_ER;
 }

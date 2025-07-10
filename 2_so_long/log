@@ -1,0 +1,36 @@
+==194865== Memcheck, a memory error detector
+==194865== Copyright (C) 2002-2024, and GNU GPL'd, by Julian Seward et al.
+==194865== Using Valgrind-3.25.0 and LibVEX; rerun with -h for copyright info
+==194865== Command: ./so_long testmap.ber
+==194865== Parent PID: 178339
+==194865== 
+==194865== Syscall param writev(vector[0]) points to uninitialised byte(s)
+==194865==    at 0x4BE8A57: writev (writev.c:26)
+==194865==    by 0x4D03A52: ??? (in /usr/lib/x86_64-linux-gnu/libxcb.so.1.1.0)
+==194865==    by 0x4D03B1F: ??? (in /usr/lib/x86_64-linux-gnu/libxcb.so.1.1.0)
+==194865==    by 0x4D04D67: xcb_writev (in /usr/lib/x86_64-linux-gnu/libxcb.so.1.1.0)
+==194865==    by 0x48CA6BD: _XSend (in /usr/lib/x86_64-linux-gnu/libX11.so.6.4.0)
+==194865==    by 0x48CEE5F: _XReadEvents (in /usr/lib/x86_64-linux-gnu/libX11.so.6.4.0)
+==194865==    by 0x48CF205: XWindowEvent (in /usr/lib/x86_64-linux-gnu/libX11.so.6.4.0)
+==194865==    by 0x4052B5: mlx_int_wait_first_expose (in /home/thenriqu/Desktop/CC/2_Milestone/2_so_long/so_long)
+==194865==    by 0x404FDD: mlx_new_window (in /home/thenriqu/Desktop/CC/2_Milestone/2_so_long/so_long)
+==194865==    by 0x404A1F: run_game (so_long.c:16)
+==194865==    by 0x404B66: main (so_long.c:37)
+==194865==  Address 0x4d65c3c is 28 bytes inside a block of size 16,384 alloc'd
+==194865==    at 0x484FCD3: calloc (in /sgoinfre/thenriqu/.brew/Cellar/valgrind/3.25.0/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
+==194865==    by 0x48B8EBE: XOpenDisplay (in /usr/lib/x86_64-linux-gnu/libX11.so.6.4.0)
+==194865==    by 0x404D67: mlx_init (in /home/thenriqu/Desktop/CC/2_Milestone/2_so_long/so_long)
+==194865==    by 0x4049C2: run_game (so_long.c:11)
+==194865==    by 0x404B66: main (so_long.c:37)
+==194865==  Uninitialised value was created by a stack allocation
+==194865==    at 0x4051D0: mlx_int_anti_resize_win (in /home/thenriqu/Desktop/CC/2_Milestone/2_so_long/so_long)
+==194865== 
+==194865== 
+==194865== HEAP SUMMARY:
+==194865==     in use at exit: 0 bytes in 0 blocks
+==194865==   total heap usage: 315 allocs, 315 frees, 132,617 bytes allocated
+==194865== 
+==194865== All heap blocks were freed -- no leaks are possible
+==194865== 
+==194865== For lists of detected and suppressed errors, rerun with: -s
+==194865== ERROR SUMMARY: 1 errors from 1 contexts (suppressed: 0 from 0)

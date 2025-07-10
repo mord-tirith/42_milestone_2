@@ -1,5 +1,6 @@
 
 #include "boot_lib.h"
+#include "so_long.h"
 
 static void	boot_t_game(t_game *game)
 {
@@ -16,18 +17,25 @@ static void	boot_t_game(t_game *game)
 		game->error_bitmask |= MALLOCS_ER;
 }
 
-int main(int ac, char **av)
+void	ft_boot_game(t_game *game, char *file)
 {
-	t_game	game;
-
-	if (ac != 2)
-		return (0);
-	boot_t_game(&game);
-	game.assets->map_file = av[1];
-	ft_boot_map(&game);
-	ft_boot_mlx(&game);
-	ft_boot_assets(&game);
-
-	ft_clean_game(&game);
-	return (0);
+	boot_t_game(game);
+	if (game->error_bitmask)
+		return ;
+	game->assets->map_file = file;
+	ft_boot_map(game);
+	if (game->error_bitmask)
+		return ;
+	/*
+	game->mlx = mlx_init();
+	if (!game->mlx)
+	{
+		game->error_bitmask |= MLXLOAD_ER;
+		return ;
+	}
+	ft_boot_mlx(game);
+	if (game->error_bitmask)
+		return ;
+	ft_boot_assets(game);
+	*/
 }

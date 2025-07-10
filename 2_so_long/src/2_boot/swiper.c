@@ -28,7 +28,7 @@ static void	deload_assets(t_assets *assets, void *mlx)
 	i = -1;
 	while (MAP_ASSETS[++i])
 		mlx_destroy_image(mlx, assets->a_map[i]);
-
+	mlx_destroy_image(mlx, assets->a_err);
 }
 
 void	ft_clean_game(t_game *game)

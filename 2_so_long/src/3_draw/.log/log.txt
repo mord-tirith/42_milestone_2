@@ -1,3 +1,92 @@
+=== start of draw_lib.h ===
+
+#ifndef DRAW_LIB_H
+#define DRAW_LIB_H
+
+# include "so_long.h"
+
+
+#endif
+=== end of draw_lib.h ===
+=== start of looper.c ===
+
+#include "draw_lib.h"
+#include "so_long.h"
+#include <stdlib.h>
+
+int	ft_on_expose(void *g)
+{
+	ft_draw_map((t_game *)g);
+	return (0);
+}
+
+int	ft_on_destroy(void *g)
+{
+	(void)g;
+	return (0);
+}
+
+void	ft_run_game(t_game *game)
+{
+	if (!game || !game->mlx || !game->win)
+		return ;
+	mlx_loop(game->mlx);
+}
+=== end of looper.c ===
+=== start of map_draw.c ===
+
+#include "draw_lib.h"
+#include "so_long.h"
+#include <stdlib.h>
+
+static void	*give_image_ptr(t_game *game, char c)
+{
+	int		i;
+	t_assets *a;
+
+	if (!game || !game->assets)
+		return (NULL);
+	i = 0;
+	a = game->assets;
+	while (MAP_ASSETS[i])
+	{
+		if (c == MAP_ASSETS[i])
+			return (a->a_map[i]);
+		i++;
+	}
+	return (a->a_err);
+}
+
+
+void	ft_draw_map(t_game *game)
+{
+	int		x;
+	int		y;
+	void	*img;
+	t_map	*map;
+
+	if (!game || !game->mlx || !game->win || !game->map)
+		return ;
+	map = game->map;
+	y = 0;
+	while (map->arr[y])
+	{
+		x = 0;
+		while (map->arr[y][x])
+		{
+			img = give_image_ptr(game, map->arr[y][x]);
+			ft_printf("(%d,%d) -> '%c'  ptr=%p\n", x, y, map->arr[y][x], img);
+			if (!img)
+				return ;
+			mlx_put_image_to_window(game->mlx, game->win, img,
+						   x * TILE_SIZE, y * TILE_SIZE);
+			x++;
+		}
+		y++;
+	}
+}
+=== end of map_draw.c ===
+=== start of so_long.h ===
 
 #ifndef SO_LONG_H
 # define SO_LONG_H
@@ -112,14 +201,11 @@ void	ft_exit_game(t_game *game);
 void	ft_resolve_error(int mask);
 
 // Draw functions:
+void	ft_run_game(t_game *game);
 void	ft_draw_map(t_game *game);
 
 // Loop functions:
 int		ft_on_expose(void *g);
 int		ft_on_destroy(void *g);
-
-// Game functions:
-int		ft_key_handler(int key, void *g);
-int		ft_handle_exit(t_game *game);
-void	ft_clean_map(t_map *map);
 #endif
+=== end of so_long.h ===
