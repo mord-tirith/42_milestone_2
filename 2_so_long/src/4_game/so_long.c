@@ -18,6 +18,8 @@ void	run_game(t_game *game)
 		ft_handle_exit(game);
 	mlx_hook(game->win, 17, 0, ft_handle_exit, game);
 	mlx_key_hook(game->win, ft_key_handler, game);
+	ft_boot_assets(game);
+	mlx_loop_hook(game->mlx, ft_draw_loop, game);
 	mlx_loop(game->mlx);
 }
 

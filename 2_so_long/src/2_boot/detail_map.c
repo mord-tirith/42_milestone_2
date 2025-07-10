@@ -20,7 +20,7 @@ static char latter_walls(int mask_dir, int mask_dig)
 	if (mask_dir == 10)
 		return ('Q');
 	if (mask_dir == 11)
-		return ("RTSU"[BITMASK_B[mask_dig] - '0']);
+		return ("RSTU"[BITMASK_B[mask_dig] - '0']);
 	if (mask_dir == 12)
 		return ("VW"[BITMASK_C[mask_dig] - '0']);
 	if (mask_dir == 13)

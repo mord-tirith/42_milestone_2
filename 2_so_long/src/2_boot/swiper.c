@@ -3,6 +3,19 @@
 #include "so_long.h"
 #include <stdlib.h>
 
+void	ft_clean_int_arr(int **arr, int i)
+{
+	int	j;
+
+	j = 0;
+	while (j < i)
+	{
+		free(arr[j]);
+		j++;
+	}
+	free(arr);
+}
+
 char	**ft_clean_arr(char **arr)
 {
 	int	i;
@@ -36,7 +49,7 @@ void	ft_clean_game(t_game *game)
 	if (game->map)
 	{
 		if (game->map->arr)
-			ft_clean_arr(game->map->arr);
+			ft_clean_int_arr(game->map->arr, game->map->y);
 		if (game->map->layout)
 			ft_clean_arr(game->map->layout);
 		free(game->map);

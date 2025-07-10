@@ -8,24 +8,23 @@
 
 /* Types: */
 
+typedef enum e_dir
+{
+	UP = 0,
+	LEFT = 1,
+	DOWN = 2,
+	RIGHT = 3
+}	t_dir;
+
 typedef struct s_map
 {
 	int		x;
 	int		y;
-	char	**arr;
+	int		e_x;
+	int		e_y;
+	int		**arr;
 	char	**layout;
 }	t_map;
-
-typedef struct s_img
-{
-	int		bpp;
-	int		line;
-	int		endian;
-	int		width;
-	int		height;
-	int		*data;
-	void	*img;
-}	t_img;
 
 typedef struct s_assets
 {
@@ -33,8 +32,20 @@ typedef struct s_assets
 	int		w;
 	char	*map_file;
 	void	*a_map[52];
+	void	*a_pla[4];
+	void	*a_coin;
+	void	*a_exit_c;
+	void	*a_exit_o;
 	void	*a_err;
 }	t_assets;
+
+typedef struct s_player
+{
+	int	x;
+	int	y;
+	int	dir;
+	int	pla_render;
+}	t_player;
 
 typedef struct s_game
 {
@@ -43,10 +54,12 @@ typedef struct s_game
 	int			p_x;
 	int			p_y;
 	int			coins;
+	int			map_render;
 	void		*mlx;
 	void		*win;
 	t_map		*map;
 	t_assets	*assets;
+	t_player	*player;
 }	t_game;
 
 typedef enum e_flags
@@ -98,12 +111,14 @@ typedef enum e_flags
 # define GAME_NAME "so_long"
 # define TILE_SIZE 48
 # define MAP_ASSETS "!%@$aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpPQRSTUvVwWxXyYzZ#"
+# define ASSET_ERROR -1
 
 /* Functions: */
 int	ft_valid_map(char *map_file);
 
 // Boot functions:
 void	ft_boot_game(t_game *game, char *file);
+void	ft_boot_assets(t_game *game);
 
 // Exit functions:
 void	ft_exit_game(t_game *game);
@@ -112,7 +127,7 @@ void	ft_exit_game(t_game *game);
 void	ft_resolve_error(int mask);
 
 // Draw functions:
-void	ft_draw_map(t_game *game);
+int		ft_draw_loop(void *g);
 
 // Loop functions:
 int		ft_on_expose(void *g);
@@ -122,4 +137,5 @@ int		ft_on_destroy(void *g);
 int		ft_key_handler(int key, void *g);
 int		ft_handle_exit(t_game *game);
 void	ft_clean_map(t_map *map);
+void	ft_win_game(t_game *game);
 #endif

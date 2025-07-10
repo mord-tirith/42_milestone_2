@@ -4,5 +4,7 @@
 
 # include "so_long.h"
 
+void	ft_draw_map(t_game *game);
+void	ft_draw_player(t_game *game);
 
 #endif

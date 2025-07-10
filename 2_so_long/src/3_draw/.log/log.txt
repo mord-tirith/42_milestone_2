@@ -5,85 +5,59 @@
 
 # include "so_long.h"
 
+void	ft_draw_map(t_game *game);
 
 #endif
 === end of draw_lib.h ===
 === start of looper.c ===
 
 #include "draw_lib.h"
-#include "so_long.h"
-#include <stdlib.h>
 
-int	ft_on_expose(void *g)
+int	ft_draw_loop(void *g)
 {
-	ft_draw_map((t_game *)g);
+	t_game	*game;
+
+	game = (t_game *)g;
+	ft_draw_map(game);
 	return (0);
-}
-
-int	ft_on_destroy(void *g)
-{
-	(void)g;
-	return (0);
-}
-
-void	ft_run_game(t_game *game)
-{
-	if (!game || !game->mlx || !game->win)
-		return ;
-	mlx_loop(game->mlx);
 }
 === end of looper.c ===
 === start of map_draw.c ===
 
 #include "draw_lib.h"
-#include "so_long.h"
-#include <stdlib.h>
 
-static void	*give_image_ptr(t_game *game, char c)
+void	run_draw_map(t_game *game)
 {
-	int		i;
-	t_assets *a;
+	int			y;
+	int			x;
+	t_map		*m;
+	t_assets	*a;
 
-	if (!game || !game->assets)
-		return (NULL);
-	i = 0;
+	m = game->map;
 	a = game->assets;
-	while (MAP_ASSETS[i])
-	{
-		if (c == MAP_ASSETS[i])
-			return (a->a_map[i]);
-		i++;
-	}
-	return (a->a_err);
-}
-
-
-void	ft_draw_map(t_game *game)
-{
-	int		x;
-	int		y;
-	void	*img;
-	t_map	*map;
-
-	if (!game || !game->mlx || !game->win || !game->map)
-		return ;
-	map = game->map;
 	y = 0;
-	while (map->arr[y])
+	while (y < m->y)
 	{
 		x = 0;
-		while (map->arr[y][x])
+		while (x < m->x)
 		{
-			img = give_image_ptr(game, map->arr[y][x]);
-			ft_printf("(%d,%d) -> '%c'  ptr=%p\n", x, y, map->arr[y][x], img);
-			if (!img)
-				return ;
-			mlx_put_image_to_window(game->mlx, game->win, img,
-						   x * TILE_SIZE, y * TILE_SIZE);
+			if (m->arr[y][x] >= 0)
+				mlx_put_image_to_window(game->mlx, game->win,
+					a->a_map[m->arr[y][x]], x * TILE_SIZE, y * TILE_SIZE);
+			else
+				mlx_put_image_to_window(game->mlx, game->win,
+					a->a_err, x * TILE_SIZE, y * TILE_SIZE);
 			x++;
 		}
 		y++;
 	}
+	game->map_render = 0;
+}
+
+void	ft_draw_map(t_game *game)
+{
+	if (game->map_render)
+		run_draw_map(game);
 }
 === end of map_draw.c ===
 === start of so_long.h ===
@@ -101,7 +75,7 @@ typedef struct s_map
 {
 	int		x;
 	int		y;
-	char	**arr;
+	int		**arr;
 	char	**layout;
 }	t_map;
 
@@ -132,6 +106,7 @@ typedef struct s_game
 	int			p_x;
 	int			p_y;
 	int			coins;
+	bool		map_render;
 	void		*mlx;
 	void		*win;
 	t_map		*map;
@@ -187,12 +162,14 @@ typedef enum e_flags
 # define GAME_NAME "so_long"
 # define TILE_SIZE 48
 # define MAP_ASSETS "!%@$aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpPQRSTUvVwWxXyYzZ#"
+# define ASSET_ERROR -1
 
 /* Functions: */
 int	ft_valid_map(char *map_file);
 
 // Boot functions:
 void	ft_boot_game(t_game *game, char *file);
+void	ft_boot_assets(t_game *game);
 
 // Exit functions:
 void	ft_exit_game(t_game *game);
@@ -201,11 +178,15 @@ void	ft_exit_game(t_game *game);
 void	ft_resolve_error(int mask);
 
 // Draw functions:
-void	ft_run_game(t_game *game);
-void	ft_draw_map(t_game *game);
+int		ft_draw_loop(void *g);
 
 // Loop functions:
 int		ft_on_expose(void *g);
 int		ft_on_destroy(void *g);
+
+// Game functions:
+int		ft_key_handler(int key, void *g);
+int		ft_handle_exit(t_game *game);
+void	ft_clean_map(t_map *map);
 #endif
 === end of so_long.h ===

@@ -7,10 +7,10 @@
 int		ft_is_wall(t_map map, int y, int x);
 char	ft_prep_wall(t_map map, int y, int x);
 char	**ft_clean_arr(char **arr);
+void	ft_clean_int_arr(int **arr, int i);
 void	ft_clean_game(t_game *game);
 void	ft_boot_map(t_game *game);
-void	ft_boot_assets(t_game *game);
-void	ft_boot_mlx(t_game *game);
+void	ft_boot_player(t_game *game);
 void	ft_detail_map(t_map *map);
 
 

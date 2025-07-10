@@ -62,6 +62,27 @@ static char **load_map(char *file)
 	return (copy_map(fd, map, size));
 }
 
+static void	get_p_yx(t_game *game)
+{
+	int		i;
+	char	*chr;
+	char	**map;
+
+	map = game->map->layout;
+	i = 1;
+	while (map[i])
+	{
+		chr = ft_strchr(map[i], 'P');
+		if (chr)
+		{
+			game->p_y = i;
+			game->p_x = chr - map[i];
+			return ;
+		}
+		i++;
+	}
+}
+
 void	ft_boot_map(t_game *game)
 {
 	int	i;
@@ -77,4 +98,5 @@ void	ft_boot_map(t_game *game)
 	ft_detail_map(game->map);
 	if (!game->map->arr)
 		game->error_bitmask |= MALLOCS_ER;
+	get_p_yx(game);
 }

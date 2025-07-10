@@ -19,13 +19,13 @@ PARSER		= $(addprefix 0_parser/, $(PAR_FILES))
 ERR_FILES = 
 ERRORS		= $(addprefix 1_error/, $(ERR_FILES))
 
-BOT_FILES = assets_boot.c boot.c detail_map.c map_boot.c reboot_map.c swiper.c
+BOT_FILES = boot.c detail_map.c map_boot.c player_boot.c reboot_map.c swiper.c
 BOOT			= $(addprefix 2_boot/, $(BOT_FILES))
 
-DRA_FILES	= map_draw.c
+DRA_FILES	= looper.c map_draw.c player_draw.c
 DRAW			= $(addprefix 3_draw/, $(DRA_FILES))
 
-GAM_FILES = hooks.c so_long.c
+GAM_FILES = assets.c cleanup.c hooks.c so_long.c
 GAME			= $(addprefix 4_game/, $(GAM_FILES))
 
 SRC_FILES	= $(PARSER) $(BOOT) $(DRAW) $(GAME) 

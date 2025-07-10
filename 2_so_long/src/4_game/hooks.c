@@ -1,42 +1,31 @@
 
 #include "so_long.h"
-#include <stdlib.h>
 
-void	ft_clean_map(t_map *map)
+static void	try_move(t_game *game, int y, int x, int dir)
 {
-	int	i;
+	int		x2;
+	int		y2;
+	char	**map;
 
-	if (map->arr)
+	x2 = game->player->x + x;
+	y2 = game->player->y + y;
+	map = game->map->layout;
+	if (map[y2][x2] != '1' && map[y2][x2] != 'E')
 	{
-		i = -1;
-		while (map->arr[++i])
-			free(map->arr[i]);
-		free(map->arr);
+		game->player->y = y2;
+		game->player->x = x2;
+		game->player->dir = dir;
+		game->player->pla_render = 1;
+		game->map_render = 1;
+		if (map[y2][x2] == 'C')
+		{	
+			game->map->layout[y2][x2] = '0';
+			game->coins -= 1;
+		}
+		game->move_count += 1;
 	}
-	if (map->layout)
-	{
-		i = -1;
-		while (map->layout[++i])
-			free(map->layout[i]);
-		free(map->layout);
-	}
-	free(map);
-}
-
-int	ft_handle_exit(t_game *game)
-{
-	if (game->map)
-		ft_clean_map(game->map);
-	if (game->win)
-		mlx_destroy_window(game->mlx, game->win);
-	if (game->mlx && LIN_FLAG)
-		mlx_destroy_display(game->mlx);
-	if (game->assets)
-		free(game->assets);
-	if (game->mlx)
-		free(game->mlx);
-	exit(0);
-	return(0);
+	if (map[y2][x2] == 'E' && !game->coins)
+		ft_win_game(game);
 }
 
 int	ft_key_handler(int key, void *g)
@@ -46,5 +35,13 @@ int	ft_key_handler(int key, void *g)
 	game = (t_game *)g;
 	if (key == KEY_ESC)
 		ft_handle_exit(game);
+	else if (key == KEY_W || key == KEY_UP)
+		try_move(game, -1, 0, UP);
+	else if (key == KEY_A || key == KEY_LEFT)
+		try_move(game, 0, -1, LEFT);
+	else if (key == KEY_S || key == KEY_DOWN)
+		try_move(game, 1, 0, DOWN);
+	else if (key == KEY_D || key == KEY_RIGHT)
+		try_move(game, 0, 1, RIGHT);
 	return (0);
 }

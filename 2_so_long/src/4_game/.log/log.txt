@@ -1,0 +1,278 @@
+=== start of assets.c ===
+
+#include "so_long.h"
+
+static int	boot_a_map(t_assets *a, void *mlx)
+{
+	int			i;
+	static char	path[23];
+
+	i = 0;
+	while (MAP_ASSETS[i])
+	{
+		ft_sprintf(path, 23, "./assets/map/%c.xpm", MAP_ASSETS[i]);
+		a->a_map[i] = mlx_xpm_file_to_image(mlx, path, &a->w, &a->h);
+		if (!a->a_map[i])
+		{
+			ft_printf("%couldn't load asset %s\n", path);
+			return (0);
+		}
+		i++;
+	}
+	return (1);
+}
+
+static int	boot_a_err(t_assets *a, void *mlx)
+{
+	char	*path;
+
+	path = "./assets/a_err.xpm";
+	a->a_err = mlx_xpm_file_to_image(mlx, path, &a->w, &a->h);
+	if (!a->a_err)
+		return (0);
+	return (1);
+}
+
+void	ft_boot_assets(t_game *game)
+{
+	if (!boot_a_map(game->assets, game->mlx) ||
+	boot_a_err(game->assets, game->mlx))
+		game->error_bitmask |= MLXLOAD_ER;
+}
+=== end of assets.c ===
+=== start of cleanup.c ===
+#include "so_long.h"
+#include <stdlib.h>
+
+void	ft_clean_assets(t_assets *assets, void *mlx)
+{
+	int	i;
+
+	i = -1;
+	while (++i < 52)
+		mlx_destroy_image(mlx, assets->a_map[i]);
+	mlx_destroy_image(mlx, assets->a_err);
+	if (assets)
+		free(assets);
+}
+
+void	ft_clean_map(t_map *map)
+{
+	int	i;
+
+	if (map->arr)
+	{
+		i = -1;
+		while (map->arr[++i])
+			free(map->arr[i]);
+		free(map->arr);
+	}
+	if (map->layout)
+	{
+		i = -1;
+		while (map->layout[++i])
+			free(map->layout[i]);
+		free(map->layout);
+	}
+	free(map);
+}
+
+int	ft_handle_exit(t_game *game)
+{
+	if (game->map)
+		ft_clean_map(game->map);
+	if (game->assets)
+		ft_clean_assets(game->assets, game->mlx);
+	if (game->win)
+		mlx_destroy_window(game->mlx, game->win);
+	if (game->mlx && LIN_FLAG)
+		mlx_destroy_display(game->mlx);
+	if (game->mlx)
+		free(game->mlx);
+	exit(0);
+	return(0);
+}
+=== end of cleanup.c ===
+=== start of hooks.c ===
+
+#include "so_long.h"
+
+int	ft_key_handler(int key, void *g)
+{
+	t_game	*game;
+
+	game = (t_game *)g;
+	if (key == KEY_ESC)
+		ft_handle_exit(game);
+	return (0);
+}
+=== end of hooks.c ===
+=== start of so_long.c ===
+
+#include "so_long.h"
+#include <unistd.h>
+
+
+void	run_game(t_game *game)
+{
+	int	width;
+	int	height;
+
+	game->mlx = mlx_init();
+	if (!game->mlx)
+		ft_handle_exit(game);
+	width = game->map->x * TILE_SIZE;
+	height = game->map->y * TILE_SIZE;
+	game->win = mlx_new_window(game->mlx, width, height, GAME_NAME);
+	if (!game->win)
+		ft_handle_exit(game);
+	mlx_hook(game->win, 17, 0, ft_handle_exit, game);
+	mlx_key_hook(game->win, ft_key_handler, game);
+	ft_boot_assets(game);
+	mlx_loop(game->mlx);
+}
+
+int	main(int ac, char **av)
+{
+	int		invalid_run;
+	t_game	game;
+
+	if (ac != 2)
+		return (ft_perror("%s", "Use: ./so_long MAP_FILE.ber\n"));
+	invalid_run = ft_valid_map(av[1]);
+	if (invalid_run)
+		return (ft_perror("%s", "Parsing problem!\n"));
+	ft_boot_game(&game, av[1]);
+	if (game.error_bitmask)
+		return (ft_perror("%s", "Boot problem!\n"));
+	run_game(&game);
+}
+=== end of so_long.c ===
+=== start of so_long.h ===
+
+#ifndef SO_LONG_H
+# define SO_LONG_H
+
+/* Global Includes: */
+# include "../libft/inc/libftpp.h"
+# include "../minilibx-linux/mlx.h"
+
+/* Types: */
+
+typedef struct s_map
+{
+	int		x;
+	int		y;
+	char	**arr;
+	char	**layout;
+}	t_map;
+
+typedef struct s_img
+{
+	int		bpp;
+	int		line;
+	int		endian;
+	int		width;
+	int		height;
+	int		*data;
+	void	*img;
+}	t_img;
+
+typedef struct s_assets
+{
+	int		h;
+	int		w;
+	char	*map_file;
+	void	*a_map[52];
+	void	*a_err;
+}	t_assets;
+
+typedef struct s_game
+{
+	int			error_bitmask;
+	int			move_count;
+	int			p_x;
+	int			p_y;
+	int			coins;
+	void		*mlx;
+	void		*win;
+	t_map		*map;
+	t_assets	*assets;
+}	t_game;
+
+typedef enum e_flags
+{	
+	SUCCESSFUL = 0,
+	MALLOCS_ER = 1 << 0,
+	BERFILE_ER = 1 << 1,
+	MAPFILE_ER = 1 << 2,
+	X_VALUE_ER = 1 << 3,
+	PLAYERS_ER = 1 << 4,
+	EXITPLU_ER = 1 << 5,
+	OPENWAL_ER = 1 << 6,
+	NOCOINS_ER = 1 << 7,
+	NOPLAYE_ER = 1 << 8,
+	NOEXITS_ER = 1 << 9,
+	LOCKOIN_ER = 1 << 10,
+	LOCKEXI_ER = 1 << 11,
+	WRONGAC_ER = 1 << 12,
+	MLXLOAD_ER = 1 << 13
+}	t_flags;
+
+/* System Dependant Macros: */
+# ifdef __linux__
+#  define KEY_ESC	65307
+#  define KEY_W		119
+#  define KEY_A		97
+#  define KEY_S		115
+#  define KEY_D		100
+#  define KEY_UP	65362
+#  define KEY_LEFT	65361
+#  define KEY_DOWN	65364
+#  define KEY_RIGHT	65363
+#  define LIN_FLAG	1
+
+# elif __APPLE__
+#  define KEY_ESC	53
+#  define KEY_W		13
+#  define KEY_A		0
+#  define KEY_S		1
+#  define KEY_D		2
+#  define KEY_UP	126 
+#  define KEY_LEFT	123 
+#  define KEY_DOWN	125
+#  define KEY_RIGHT	124 
+#  define LIN_FLAG	0
+# endif
+
+/* Macros: */
+# define GAME_NAME "so_long"
+# define TILE_SIZE 48
+# define MAP_ASSETS "!%@$aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpPQRSTUvVwWxXyYzZ#"
+
+/* Functions: */
+int	ft_valid_map(char *map_file);
+
+// Boot functions:
+void	ft_boot_game(t_game *game, char *file);
+void	ft_boot_assets(t_game *game);
+
+// Exit functions:
+void	ft_exit_game(t_game *game);
+
+// Error management:
+void	ft_resolve_error(int mask);
+
+// Draw functions:
+void	ft_draw_map(t_game *game);
+
+// Loop functions:
+int		ft_on_expose(void *g);
+int		ft_on_destroy(void *g);
+
+// Game functions:
+int		ft_key_handler(int key, void *g);
+int		ft_handle_exit(t_game *game);
+void	ft_clean_map(t_map *map);
+#endif
+=== end of so_long.h ===
