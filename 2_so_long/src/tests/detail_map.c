@@ -1,1 +1,0 @@
-../2_boot/detail_map.c

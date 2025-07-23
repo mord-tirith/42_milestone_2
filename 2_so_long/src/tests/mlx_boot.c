@@ -1,1 +1,0 @@
-../2_boot/mlx_boot.c

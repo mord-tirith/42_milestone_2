@@ -1,1 +1,0 @@
-../2_boot/assets_boot.c

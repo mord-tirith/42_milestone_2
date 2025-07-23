@@ -1,0 +1,1204 @@
+=== start of ./0_parser/file.c ===
+
+#include "parse_lib.h"
+#include <fcntl.h>
+#include <unistd.h>
+
+static char	**bad_array(char **arr, int fd)
+{
+	int	i;
+
+	if (fd >= 0)
+		close(fd);
+	i = 0;
+	if (arr)
+	{
+		while (arr[i])
+		{
+			free(arr[i]);
+			i++;
+		}
+		free(arr);
+	}
+	return (NULL);
+}
+
+static int	map_row_size(char *file)
+{
+	int		fd;
+	int		rows;
+	char	buf;
+
+	fd = open(file, O_RDONLY);
+	if (fd < 0)
+		return (-1);
+	rows = 1;
+	while (read(fd, &buf, 1) > 0)
+	{
+		if (buf == '\n')
+			rows++;
+	}
+	close(fd);
+	return (rows);
+}
+
+static char	**return_map(int fd, char **map, int size)
+{
+	int		i;
+	char	*temp;
+
+	temp = get_next_line(fd);
+	i = 0;
+	while (i < size && temp)
+	{
+		map[i] = ft_strtrim(temp, "\n");
+		if (!map[i])
+			return (bad_array(map, fd));
+		if (temp)
+			free(temp);
+		temp = get_next_line(fd);
+		i++;
+	}
+	close(fd);
+	return (map);
+}
+
+static char	**load_map(char *file)
+{
+	int		fd;
+	int		n;
+	char	**map;
+
+	n = map_row_size(file);
+	if (n <= 0)
+		return (NULL);
+	map = ft_calloc(n, sizeof(char *));
+	if (!map)
+		return (NULL);
+	fd = open(file, O_RDONLY);
+	if (fd < 0)
+		return (bad_array(map, fd));
+	return (return_map(fd, map, n));
+}
+
+void	ft_file_check(t_validators *v)
+{
+	int	i;
+
+	i = ft_strlen(v->map_file);
+	if (i < 4)
+		v->error_mask |= BERFILE_ER;
+	else
+	{
+		if (ft_strncmp(v->map_file + (i - 4), ".ber", 4))
+			v->error_mask |= BERFILE_ER;
+	}
+	if (!v->error_mask)
+		v->arr = load_map(v->map_file);
+	if (!v->arr)
+		v->error_mask |= MAPFILE_ER;
+}
+=== end of ./0_parser/file.c ===
+=== start of ./0_parser/flood.c ===
+
+#include "parse_lib.h"
+#include <stdlib.h>
+
+static void	coin_flood(int y, int x, t_validators *v)
+{
+	if (x < 0 || y < 0 || x >= v->x || y >= v->y || v->coin_map[y][x] == '1' ||
+	v->coin_map[y][x] == 'F' || v->coin_map[y][x] == 'E')
+		return ;
+	if (v->coin_map[y][x] == 'C')
+		v->coins -= 1;
+	v->coin_map[y][x] = 'F';
+	coin_flood(y - 1, x, v);
+	coin_flood(y, x - 1, v);
+	coin_flood(y + 1, x, v);
+	coin_flood(y, x + 1, v);
+}
+
+static int	exit_flood(int y, int x, t_validators *v)
+{
+
+	if (x < 0 || y < 0 || x >= v->x || y >= v->y
+		|| v->exit_map[y][x] == '1' || v->exit_map[y][x] == 'F')
+		return (0);
+	if (v->exit_map[y][x] == 'E')
+		return (1);
+	v->exit_map[y][x] = 'F';
+	return (exit_flood(y - 1, x, v) ||
+	exit_flood(y, x + 1, v) ||
+	exit_flood(y + 1, x, v) ||
+	exit_flood(y, x - 1, v));
+}
+
+static char	**clean_arr(t_validators *v)
+{
+	int	i;
+
+	if (v->coin_map)
+	{
+		i = -1;
+		while (v->coin_map[++i])
+			free(v->coin_map[i]);
+		free(v->coin_map);
+		v->coin_map = NULL;
+	}
+	if (v->exit_map)
+	{
+		i = -1;
+		while (v->exit_map[++i])
+			free(v->exit_map[i]);
+		free(v->exit_map);
+		v->exit_map = NULL;
+	}
+	v->error_mask |= MALLOCS_ER;
+	return (NULL);
+}
+
+static char	**clone_arr(t_validators *v)
+{
+	int		i;
+	char	**new_arr;
+
+	new_arr = ft_calloc(v->y + 1, sizeof(char *));
+	if (!new_arr)
+		return (clean_arr(v));
+	i = 0;
+	while (v->arr[i])
+	{
+		new_arr[i] = ft_strdup(v->arr[i]);
+		if (!new_arr[i])
+			return (clean_arr(v));
+		i++;
+	}
+	return (new_arr);
+}
+
+void	ft_flood_map(t_validators *v)
+{
+	v->coin_map = clone_arr(v);
+	v->exit_map = clone_arr(v);
+	if (!v->coin_map || !v->exit_map)
+	{
+		clean_arr(v);
+		return ;
+	}
+	if (v->coin_map)
+		coin_flood(v->p_y, v->p_x, v);
+	if (v->exit_map)
+		v->exit = exit_flood(v->p_y, v->p_x, v);
+	if (v->coins)
+		v->error_mask |= LOCKOIN_ER;
+	if (!v->exit)
+		v->error_mask |= LOCKEXI_ER;
+}
+=== end of ./0_parser/flood.c ===
+=== start of ./0_parser/maparse.c ===
+
+#include "parse_lib.h"
+#include "so_long.h"
+#include <stddef.h>
+#include <stdlib.h>
+
+static void	free2d(char **arr)
+{
+	int	i;
+
+	i = 0;
+	while (arr[i])
+	{
+		free(arr[i]);
+		i++;
+	}
+	free(arr);
+}
+
+static int	deboot_validators(t_validators *v)
+{
+	if (v->arr)
+		free2d(v->arr);
+	if (v->coin_map)
+		free2d(v->coin_map);
+	if (v->exit_map)
+		free2d(v->exit_map);
+	return (v->error_mask);
+}
+
+static t_validators	*boot_validators(char *file, t_validators *v)
+{
+	v->error_mask = 0;
+	v->coins = 0;
+	v->exit = 0;
+	v->player = 0;
+	v->x = 0;
+	v->y = 0;
+	v->flood = 0;
+	v->arr = NULL;
+	v->coin_map = NULL;
+	v->exit_map = NULL;
+	v->map_file = file;
+	return (v);
+}
+
+int	ft_valid_map(char *map_file)
+{
+	t_validators	v;
+
+	boot_validators(map_file, &v);
+	ft_file_check(&v);
+	if (v.error_mask)
+		return (v.error_mask);
+	ft_uniques(&v);
+	if (v.error_mask)
+		return (deboot_validators(&v));
+	ft_check_ones(&v);
+	ft_flood_map(&v);
+	deboot_validators(&v);
+	return (v.error_mask);
+}
+
+=== end of ./0_parser/maparse.c ===
+=== start of ./0_parser/ones.c ===
+
+#include "parse_lib.h"
+#include "so_long.h"
+
+static int	top_and_bottom(t_validators *v)
+{
+	int	i;
+	int	y;
+
+	i = 0;
+	y = v->y - 1;
+	while (v->arr[0][i])
+	{
+		if (v->arr[0][i] != '1')
+			return (0);
+		i++;
+	}
+	i = 0;
+	while (v->arr[y][i])
+	{
+		if (v->arr[y][i] != '1')
+			return (0);
+		i++;
+	}
+	return (1);
+}
+
+static int	sides(t_validators *v)
+{
+	int	i;
+	int	y_lim;
+	int	x_lim;
+
+	y_lim = v->y - 1;
+	x_lim = v->x - 1;
+	i = 1;
+	while (i < y_lim)
+	{
+		if (v->arr[i][0] != '1' || v->arr[i][x_lim] != '1')
+			return (0);
+		i++;
+	}
+	return (1);
+}
+
+void	ft_check_ones(t_validators *v)
+{
+	if (!top_and_bottom(v) || !sides(v))
+		v->error_mask |= OPENWAL_ER;
+}
+=== end of ./0_parser/ones.c ===
+=== start of ./0_parser/uniques.c ===
+
+#include "parse_lib.h"
+#include "so_long.h"
+
+static void	valid_e(t_validators *v)
+{
+	int	x;
+	int	y;
+
+	y = 0;
+	while (v->arr[y])
+	{
+		x = 0;
+		while (v->arr[y][x])
+		{
+			if (v->arr[y][x] == 'E' && !v->exit)
+				v->exit = 1;
+			else if (v->arr[y][x] == 'E')
+				v->error_mask |= EXITPLU_ER;
+			x++;
+		}
+		y++;
+	}
+	if (!v->exit)
+		v->error_mask |= NOEXITS_ER;
+}
+
+static void	valid_p(t_validators *v)
+{
+	int	x;
+	int	y;
+
+	y = 0;
+	while (v->arr[y])
+	{
+		x = 0;
+		while (v->arr[y][x])
+		{
+			if (v->arr[y][x] == 'P' && !v->player)
+			{
+				v->player = 1;
+				v->p_x = x;
+				v->p_y = y;
+			}
+			else if (v->arr[y][x] == 'P')
+				v->error_mask |= PLAYERS_ER;
+			x++;
+		}
+		y++;
+	}
+	if (!v->player)
+		v->error_mask |= NOPLAYE_ER;
+}
+
+static void	valid_c(t_validators *v)
+{
+	int	y;
+	int	x;
+
+	y = 0;
+	while (v->arr[y])
+	{
+		x = 0;
+		while (v->arr[y][x])
+		{
+			if (v->arr[y][x] == 'C')
+				v->coins++;
+			x++;
+		}
+		y++;
+	}
+	if (!v->coins)
+		v->error_mask |= NOCOINS_ER;
+}
+
+static int	valid_x(t_validators *v)
+{
+	int		i;
+
+	i = 0;
+	v->x = ft_strlen(v->arr[0]);
+	while (v->arr[i])
+	{
+		if ((int)ft_strlen(v->arr[i]) != v->x)
+		{
+			v->error_mask |= X_VALUE_ER;
+			return (0);
+		}
+		i++;
+	}
+	v->y = i;
+	return (1);
+}
+
+void	ft_uniques(t_validators *v)
+{
+	if (!valid_x(v))
+		return ;
+	valid_p(v);
+	valid_e(v);
+	valid_c(v);
+}
+=== end of ./0_parser/uniques.c ===
+=== start of ./2_boot/boot.c ===
+
+#include "boot_lib.h"
+#include "so_long.h"
+
+static void	find_exit(t_map *map)
+{
+	int		y;
+	int		x;
+	char	**arr;
+
+	arr = map->layout;
+	y = 1;
+	while (arr[y])
+	{
+		x = 1;
+		while (arr[y][x])
+		{
+			if (arr[y][x] == 'E')
+			{
+				map->e_x = x;
+				map->e_y = y;
+				return ;
+			}
+			x++;
+		}
+		y++;
+	}
+}
+
+static void	count_coins(int *coins, char **map)
+{
+	int	y;
+	int	x;
+
+	y = 1;
+	while (map[y])
+	{
+		x = 1;
+		while (map[y][x])
+		{
+			if (map[y][x] == 'C')
+				*coins += 1;
+			x++;
+		}
+		y++;
+	}
+}
+
+static void	boot_t_game(t_game *game)
+{
+	game->error_bitmask = 0;
+	game->move_count = 0;
+	game->map_render = 1;
+	game->p_x = 0;
+	game->p_y = 0;
+	game->coins = 0;
+	game->mlx = NULL;
+	game->win = NULL;
+	game->map = ft_calloc(1, sizeof(t_map));
+	game->assets = ft_calloc(1, sizeof(t_assets));
+	game->player = ft_calloc(1, sizeof(t_player));
+	if (!game->map || !game->assets || !game->player)
+		game->error_bitmask |= MALLOCS_ER;
+}
+
+void	ft_boot_game(t_game *game, char *file)
+{
+	boot_t_game(game);
+	if (game->error_bitmask)
+		return ;
+	game->assets->map_file = file;
+	ft_boot_map(game);
+	if (game->error_bitmask)
+		return ;
+	count_coins(&game->coins, game->map->layout);
+	find_exit(game->map);
+	ft_boot_player(game);
+}
+=== end of ./2_boot/boot.c ===
+=== start of ./2_boot/detail_map.c ===
+
+#include "boot_lib.h"
+
+int	ft_is_wall(t_map map, int y, int x)
+{
+	char	c;
+	int		s_x;
+	int		s_y;
+
+	s_x = map.x;
+	s_y = map.y;
+	if (x < 0 || x >= s_x || y < 0 || y >= s_y)
+		return (1);
+	c = map.layout[y][x];
+	return (c == '1');
+}
+
+static char latter_walls(int mask_dir, int mask_dig)
+{
+	if (mask_dir == 10)
+		return ('Q');
+	if (mask_dir == 11)
+		return ("RSTU"[BITMASK_B[mask_dig] - '0']);
+	if (mask_dir == 12)
+		return ("VW"[BITMASK_C[mask_dig] - '0']);
+	if (mask_dir == 13)
+		return ("XYZ%"[BITMASK_D[mask_dig] - '0']);
+	if (mask_dir == 14)
+		return ("!@#$"[BITMASK_E[mask_dig] - '0']);
+	if (mask_dir == 15)
+		return (BITMASK_F[mask_dig]);
+	return ('*');
+}
+
+static char	give_wall(int mask_dir, int mask_dig)
+{
+	if (mask_dir == 0)
+		return ('A');
+	if (mask_dir == 1)
+		return ('B');
+	if (mask_dir == 2)
+		return ('C');
+	if (mask_dir == 3)
+		return ("DE"[BITMASK_3[mask_dig] - '0']);
+	if (mask_dir == 4)
+		return ('F');
+	if (mask_dir == 5)
+		return ('G');
+	if (mask_dir == 6)
+		return ("HI"[BITMASK_6[mask_dig] - '0']);
+	if (mask_dir == 7)
+		return ("JKLM"[BITMASK_7[mask_dig] - '0']);
+	if (mask_dir == 8)
+		return ('N');
+	if (mask_dir == 9)
+		return ("OP"[BITMASK_9[mask_dig] - '0']);
+	return (latter_walls(mask_dir, mask_dig));
+}
+
+char	ft_prep_wall(t_map map, int y, int x)
+{
+	int	wasd_mask;
+	int	diag_mask;
+
+	wasd_mask = 0;
+	wasd_mask |= ft_is_wall(map, y - 1, x + 0) << 3;
+	wasd_mask |= ft_is_wall(map, y + 0, x - 1) << 2;
+	wasd_mask |= ft_is_wall(map, y + 1, x + 0) << 1;
+	wasd_mask |= ft_is_wall(map, y + 0, x + 1) << 0;
+	diag_mask = 0;
+	diag_mask |= ft_is_wall(map, y - 1, x - 1) << 3;
+	diag_mask |= ft_is_wall(map, y - 1, x + 1) << 2;
+	diag_mask |= ft_is_wall(map, y + 1, x - 1) << 1;
+	diag_mask |= ft_is_wall(map, y + 1, x + 1) << 0;
+	return (give_wall(wasd_mask, diag_mask));
+}
+=== end of ./2_boot/detail_map.c ===
+=== start of ./2_boot/map_boot.c ===
+
+#include "boot_lib.h"
+#include "so_long.h"
+#include <fcntl.h>
+#include <unistd.h>
+
+static int	row_count(char *file)
+{
+	int		fd;
+	int		rows;
+	char	buffer;
+
+	fd = open(file, O_RDONLY);
+	if (fd < 0)
+		return (-1);
+	rows = 1;
+	while (read(fd, &buffer, 1) > 0)
+	{
+		if (buffer == '\n')
+			rows++;
+	}
+	close(fd);
+	return (rows);
+}
+
+static char	**copy_map(int fd, char **map, int size)
+{
+	int		i;
+	char	*temp;
+
+	temp = get_next_line(fd);
+	i = 0;
+	while (i < size && temp)
+	{
+		map[i] = ft_strtrim(temp, "\n");
+		if (!map[i])
+		{
+			close(fd);
+			return (ft_clean_arr(map));
+		}
+		free(temp);
+		temp = get_next_line(fd);
+		i++;
+	}
+	close(fd);
+	return (map);
+}
+
+static char **load_map(char *file)
+{
+	int		fd;
+	int		size;
+	char	**map;
+
+	size = row_count(file);
+	if (size < 0)
+		return (NULL);
+	map = ft_calloc(size, sizeof(char *));
+	fd = open(file, O_RDONLY);
+	if (fd < 0)
+		return (ft_clean_arr(map));
+	return (copy_map(fd, map, size));
+}
+
+static void	get_p_yx(t_game *game)
+{
+	int		i;
+	char	*chr;
+	char	**map;
+
+	map = game->map->layout;
+	i = 1;
+	while (map[i])
+	{
+		chr = ft_strchr(map[i], 'P');
+		if (chr)
+		{
+			game->p_y = i;
+			game->p_x = chr - map[i];
+			return ;
+		}
+		i++;
+	}
+}
+
+void	ft_boot_map(t_game *game)
+{
+	int	i;
+
+	game->map->layout = load_map(game->assets->map_file);
+	if (!game->map->layout)
+		game->error_bitmask |= MALLOCS_ER;
+	game->map->x = ft_strlen(game->map->layout[0]);
+	i = 0;
+	while (game->map->layout[i])
+		i++;
+	game->map->y = i;
+	ft_detail_map(game->map);
+	if (!game->map->arr)
+		game->error_bitmask |= MALLOCS_ER;
+	get_p_yx(game);
+}
+=== end of ./2_boot/map_boot.c ===
+=== start of ./2_boot/player_boot.c ===
+
+#include "boot_lib.h"
+#include "so_long.h"
+
+void	ft_boot_player(t_game *game)
+{
+	t_player	*p;
+
+	p = game->player;
+	p->x = game->p_x;
+	p->y = game->p_y;
+	p->dir = 2;
+	p->pla_render = 1;
+}
+=== end of ./2_boot/player_boot.c ===
+=== start of ./2_boot/reboot_map.c ===
+
+#include "boot_lib.h"
+#include "so_long.h"
+#include <stdlib.h>
+
+static void	clone_arr(t_map *map)
+{
+	int	i;
+	int	**new_arr;
+
+	new_arr = ft_calloc(map->y, sizeof(int *));
+	if (!new_arr)
+		return ;
+	i = 0;
+	while (i < map->y)
+	{
+		new_arr[i] = ft_calloc(map->x, sizeof(int));
+		if (!new_arr[i])
+		{
+			ft_clean_int_arr(new_arr, i);
+			return ;
+		}
+		i++;
+	}
+	map->arr = new_arr;
+}
+
+static int	translate_symbol(char c)
+{
+	int	i;
+
+	i = 0;
+	while (MAP_ASSETS[i])
+	{
+		if (MAP_ASSETS[i] == c)
+			return (i);
+		i++;
+	}
+	return (ASSET_ERROR);
+}
+
+void	ft_detail_map(t_map *map)
+{
+	int		x;
+	int		y;
+	char	c;
+
+	clone_arr(map);
+	if (!map->arr)
+		return ;
+	y = 0;
+	while (y < map->y)
+	{
+		x = 0;
+		while (x < map->x)
+		{
+			if (ft_is_wall(*map, y, x))
+				c = ft_prep_wall(*map, y, x);
+			else
+				c = 'z';
+			map->arr[y][x] = translate_symbol(c);
+			x++;
+		}
+		y++;
+	}
+}
+=== end of ./2_boot/reboot_map.c ===
+=== start of ./2_boot/swiper.c ===
+
+#include "boot_lib.h"
+#include "so_long.h"
+#include <stdlib.h>
+
+void	ft_clean_int_arr(int **arr, int i)
+{
+	int	j;
+
+	j = 0;
+	while (j < i)
+	{
+		free(arr[j]);
+		j++;
+	}
+	free(arr);
+}
+
+char	**ft_clean_arr(char **arr)
+{
+	int	i;
+
+	if (!arr || !*arr)
+		return (NULL);
+	i = 0;
+	while (arr[i])
+	{
+		free(arr[i]);
+		i++;
+	}
+	free(arr);
+	return (NULL);
+}
+
+static void	deload_assets(t_assets *assets, void *mlx)
+{
+	int	i;
+
+	if (!assets || !mlx)
+		return ;
+	i = -1;
+	while (MAP_ASSETS[++i])
+		mlx_destroy_image(mlx, assets->a_map[i]);
+	mlx_destroy_image(mlx, assets->a_err);
+}
+
+void	ft_clean_game(t_game *game)
+{
+	if (game->map)
+	{
+		if (game->map->arr)
+			ft_clean_int_arr(game->map->arr, game->map->y);
+		if (game->map->layout)
+			ft_clean_arr(game->map->layout);
+		free(game->map);
+	}
+	if (game->assets)
+	{
+		deload_assets(game->assets, game->mlx);
+		free(game->assets);
+	}
+	if (game->win)
+		mlx_destroy_window(game->mlx, game->win);
+	if (game->mlx)
+	{
+		mlx_destroy_display(game->mlx);
+		free(game->mlx);
+	}
+}
+=== end of ./2_boot/swiper.c ===
+=== start of ./3_draw/looper.c ===
+
+#include "draw_lib.h"
+
+int	ft_draw_loop(void *g)
+{
+	t_game	*game;
+
+	game = (t_game *)g;
+	if (game->map_render)
+		ft_draw_map(game);
+	if (game->player->pla_render)
+		ft_draw_player(game);
+	return (0);
+}
+=== end of ./3_draw/looper.c ===
+=== start of ./3_draw/map_draw.c ===
+
+#include "draw_lib.h"
+#include "so_long.h"
+
+static void	add_exit(t_game *game)
+{
+	int		x;
+	int		y;
+	void	*asset;
+
+	x = game->map->e_x * TILE_SIZE;
+	y = game->map->e_y * TILE_SIZE;
+	if (game->coins)
+		asset = game->assets->a_exit_c;
+	else
+		asset = game->assets->a_exit_o;
+	mlx_put_image_to_window(game->mlx, game->win, asset, x, y);
+}
+
+static void	add_coins_exit(t_game *game)
+{
+	int		x;
+	int		y;
+	char	**map;
+
+	y = 1;
+	map = game->map->layout;
+	while (map[y])
+	{
+		x = 1;
+		while (map[y][x])
+		{
+			if (map[y][x] == 'C')
+			{
+				mlx_put_image_to_window(game->mlx, game->win,
+					game->assets->a_coin, x * TILE_SIZE, y * TILE_SIZE);
+			}
+			x++;
+		}
+		y++;
+	}
+	add_exit(game);
+}
+
+static void	run_draw_map(t_game *game)
+{
+	int			y;
+	int			x;
+	t_map		*m;
+	t_assets	*a;
+
+	m = game->map;
+	a = game->assets;
+	y = 0;
+	while (y < m->y)
+	{
+		x = 0;
+		while (x < m->x)
+		{
+			if (m->arr[y][x] >= 0)
+				mlx_put_image_to_window(game->mlx, game->win,
+					a->a_map[m->arr[y][x]], x * TILE_SIZE, y * TILE_SIZE);
+			else
+				mlx_put_image_to_window(game->mlx, game->win,
+					a->a_err, x * TILE_SIZE, y * TILE_SIZE);
+			x++;
+		}
+		y++;
+	}
+	add_coins_exit(game);
+	game->map_render = 0;
+}
+
+void	ft_draw_map(t_game *game)
+{
+	if (game->map_render)
+		run_draw_map(game);
+}
+=== end of ./3_draw/map_draw.c ===
+=== start of ./3_draw/player_draw.c ===
+
+#include "draw_lib.h"
+
+void	ft_draw_player(t_game *game)
+{
+	int			x;
+	int			y;
+	t_player	*p;
+
+	p = game->player;
+	if (!p->pla_render)
+		return ;
+	x = p->x * TILE_SIZE;
+	y = p->y * TILE_SIZE;
+	mlx_put_image_to_window(game->mlx, game->win,
+			game->assets->a_pla[p->dir], x, y);
+	p->pla_render = 0;
+	game->map_render = 0;
+}
+
+=== end of ./3_draw/player_draw.c ===
+=== start of ./4_game/assets.c ===
+
+#include "so_long.h"
+
+static int	boot_a_map(t_assets *a, void *mlx)
+{
+	int			i;
+	static char	path[19];
+
+	i = 0;
+	while (MAP_ASSETS[i])
+	{
+		ft_sprintf(path, 19, "./assets/map/%c.xpm", MAP_ASSETS[i]);
+		a->a_map[i] = mlx_xpm_file_to_image(mlx, path, &a->w, &a->h);
+		if (!a->a_map[i])
+		{
+			ft_printf("%couldn't load asset %s\n", path);
+			return (0);
+		}
+		i++;
+	}
+	return (1);
+}
+
+static int	boot_a_err(t_assets *a, void *mlx)
+{
+	char	*path;
+
+	path = "./assets/a_err.xpm";
+	a->a_err = mlx_xpm_file_to_image(mlx, path, &a->w, &a->h);
+	if (!a->a_err)
+		return (0);
+	return (1);
+}
+
+static int	boot_c_e(t_assets *a, void *mlx)
+{
+	char	*path;
+
+	path = "./assets/others/C.xpm";
+	a->a_coin = mlx_xpm_file_to_image(mlx, path, &a->w, &a->h);
+	path = "./assets/others/E.xpm";
+	a->a_exit_c = mlx_xpm_file_to_image(mlx, path, &a->w, &a->h);
+	path = "./assets/others/W.xpm";
+	a->a_exit_o = mlx_xpm_file_to_image(mlx, path, &a->w, &a->h);
+	if (!a->a_coin || !a->a_exit_c || !a->a_exit_o)
+		return (0);
+	return (1);
+}
+
+static int	boot_a_pla(t_assets *a, void *mlx)
+{
+	int			i;
+	static char	path[22];
+
+	i = 0;
+	while (i < 4)
+	{
+		ft_sprintf(path, 22, "./assets/player/%d.xpm", i);
+		a->a_pla[i] = mlx_xpm_file_to_image(mlx, path, &a->w, &a->h);
+		if (!a->a_pla[i])
+		{
+			ft_printf("Couldn't load file %s\n", path);
+			return (0);
+		}
+		i++;
+	}
+	return (1);
+}
+
+void	ft_boot_assets(t_game *game)
+{
+	if (!boot_a_map(game->assets, game->mlx) ||
+	!boot_a_err(game->assets, game->mlx) || !boot_a_pla(game->assets, game->mlx) ||
+	!boot_c_e(game->assets, game->mlx))
+		game->error_bitmask |= MLXLOAD_ER;
+}
+=== end of ./4_game/assets.c ===
+=== start of ./4_game/cleanup.c ===
+#include "so_long.h"
+#include <stdlib.h>
+
+static void	finish_assets(t_assets *a, void *m)
+{
+	if (a->a_exit_c)
+		mlx_destroy_image(m, a->a_exit_c);
+	if (a->a_exit_o)
+		mlx_destroy_image(m, a->a_exit_o);
+	if (a)
+		free(a);
+}
+
+void	ft_clean_assets(t_assets *assets, void *mlx)
+{
+	int	i;
+
+	i = -1;
+	while (++i < 52)
+	{
+		if (assets->a_map[i])
+			mlx_destroy_image(mlx, assets->a_map[i]);
+	}
+	i = -1;
+	while (++i < 4)
+	{
+		if (assets->a_pla[i])
+			mlx_destroy_image(mlx, assets->a_pla[i]);
+	}
+	if (assets->a_err)
+		mlx_destroy_image(mlx, assets->a_err);
+	if (assets->a_coin)
+		mlx_destroy_image(mlx, assets->a_coin);
+	return (finish_assets(assets, mlx));
+}
+
+void	ft_clean_map(t_map *map)
+{
+	int	i;
+
+	if (map->arr)
+	{
+		i = -1;
+		while (++i < map->y)
+			free(map->arr[i]);
+		free(map->arr);
+	}
+	if (map->layout)
+	{
+		i = -1;
+		while (map->layout[++i])
+			free(map->layout[i]);
+		free(map->layout);
+	}
+	free(map);
+}
+
+int	ft_handle_exit(t_game *game)
+{
+	if (game->map)
+		ft_clean_map(game->map);
+	if (game->assets)
+		ft_clean_assets(game->assets, game->mlx);
+	if (game->win)
+		mlx_destroy_window(game->mlx, game->win);
+	if (game->mlx && LIN_FLAG)
+		mlx_destroy_display(game->mlx);
+	if (game->mlx)
+		free(game->mlx);
+	if (game->player)
+		free(game->player);
+	exit(0);
+	return(0);
+}
+
+void	ft_win_game(t_game *game)
+{
+	ft_printf("Victory! Your move count:\n%d", game->move_count);
+	ft_handle_exit(game);
+}
+=== end of ./4_game/cleanup.c ===
+=== start of ./4_game/hooks.c ===
+
+#include "so_long.h"
+
+static void	try_move(t_game *game, int y, int x, int dir)
+{
+	int		x2;
+	int		y2;
+	char	**map;
+
+	x2 = game->player->x + x;
+	y2 = game->player->y + y;
+	map = game->map->layout;
+	if (map[y2][x2] != '1' && map[y2][x2] != 'E')
+	{
+		game->player->y = y2;
+		game->player->x = x2;
+		game->player->dir = dir;
+		game->player->pla_render = 1;
+		game->map_render = 1;
+		if (map[y2][x2] == 'C')
+		{	
+			game->map->layout[y2][x2] = '0';
+			game->coins -= 1;
+		}
+		game->move_count += 1;
+	}
+	if (map[y2][x2] == 'E' && !game->coins)
+		ft_win_game(game);
+}
+
+int	ft_key_handler(int key, void *g)
+{
+	t_game	*game;
+
+	game = (t_game *)g;
+	if (key == KEY_ESC)
+		ft_handle_exit(game);
+	else if (key == KEY_W || key == KEY_UP)
+		try_move(game, -1, 0, UP);
+	else if (key == KEY_A || key == KEY_LEFT)
+		try_move(game, 0, -1, LEFT);
+	else if (key == KEY_S || key == KEY_DOWN)
+		try_move(game, 1, 0, DOWN);
+	else if (key == KEY_D || key == KEY_RIGHT)
+		try_move(game, 0, 1, RIGHT);
+	return (0);
+}
+=== end of ./4_game/hooks.c ===
+=== start of ./4_game/so_long.c ===
+
+#include "so_long.h"
+#include <unistd.h>
+
+
+void	run_game(t_game *game)
+{
+	int	width;
+	int	height;
+
+	game->mlx = mlx_init();
+	if (!game->mlx)
+		ft_handle_exit(game);
+	width = game->map->x * TILE_SIZE;
+	height = game->map->y * TILE_SIZE;
+	game->win = mlx_new_window(game->mlx, width, height, GAME_NAME);
+	if (!game->win)
+		ft_handle_exit(game);
+	mlx_hook(game->win, 17, 0, ft_handle_exit, game);
+	mlx_key_hook(game->win, ft_key_handler, game);
+	ft_boot_assets(game);
+	mlx_loop_hook(game->mlx, ft_draw_loop, game);
+	mlx_loop(game->mlx);
+}
+
+int	main(int ac, char **av)
+{
+	int		invalid_run;
+	t_game	game;
+
+	if (ac != 2)
+		return (ft_perror("%s", "Use: ./so_long MAP_FILE.ber\n"));
+	invalid_run = ft_valid_map(av[1]);
+	if (invalid_run)
+		return (ft_perror("%s", "Parsing problem!\n"));
+	ft_boot_game(&game, av[1]);
+	if (game.error_bitmask)
+		return (ft_perror("%s", "Boot problem!\n"));
+	run_game(&game);
+}
+=== end of ./4_game/so_long.c ===
