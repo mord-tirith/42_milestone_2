@@ -57,11 +57,12 @@ typedef struct s_assets
 	t_img	a_exi[2];
 	t_img	a_map[52];
 	t_img	a_pla[96];
+	t_img	a_mob[96];
 	t_img	a_spi[3];
 	t_img	a_key[3];
 }	t_assets;
 
-typedef struct s_player
+typedef struct s_entity
 {
 	int	x;
 	int	y;
@@ -70,12 +71,13 @@ typedef struct s_player
 	int	curr;
 	int	dir;
 	int	state;
-}	t_player;
+}	t_entity;
 
 typedef struct s_game
 {
 	int			error_bitmask;
 	int			move_count;
+	int			mob_count;
 	int			p_x;
 	int			p_y;
 	int			coins;
@@ -85,7 +87,8 @@ typedef struct s_game
 	t_map		*map;
 	t_img		*frame;
 	t_assets	*assets;
-	t_player	*player;
+	t_entity	*player;
+	t_entity	**mobs;
 }	t_game;
 
 typedef enum e_flags

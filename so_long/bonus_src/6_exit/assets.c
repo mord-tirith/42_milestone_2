@@ -21,6 +21,7 @@ void	ft_free_assets(t_assets *a, void *mlx, t_img *frame)
 	asset_destroy(a->a_spi, mlx, 3);
 	asset_destroy(a->a_key, mlx, 3);
 	asset_destroy(a->a_exi, mlx, 2);
+	asset_destroy(a->a_mob, mlx, 96);
 	if (frame->img)
 		mlx_destroy_image(mlx, frame->img);
 	free(frame);

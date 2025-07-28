@@ -5,6 +5,7 @@
 # include "so_long_bonus.h"
 
 int		ft_is_wall(t_map map, int y, int x);
+int		ft_boot_mobs(t_game *game);
 char	ft_prep_wall(t_map map, int y, int x);
 char	**ft_clean_arr(char **arr);
 void	ft_clean_int_arr(int **arr, int i);

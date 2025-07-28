@@ -26,7 +26,7 @@ static void	find_exit(t_map *map)
 	}
 }
 
-static void	count_coins(int *coins, char **map)
+static void	count_a(int *coins, int *mobs, char **map)
 {
 	int	y;
 	int	x;
@@ -39,6 +39,8 @@ static void	count_coins(int *coins, char **map)
 		{
 			if (map[y][x] == 'C')
 				*coins += 1;
+			if (map[y][x] == 'M')
+				*mobs += 1;
 			x++;
 		}
 		y++;
@@ -53,11 +55,12 @@ static void	boot_t_game(t_game *game)
 	game->p_x = 0;
 	game->p_y = 0;
 	game->coins = 0;
+	game->mob_count = 0;
 	game->mlx = NULL;
 	game->win = NULL;
 	game->map = ft_calloc(1, sizeof(t_map));
 	game->assets = ft_calloc(1, sizeof(t_assets));
-	game->player = ft_calloc(1, sizeof(t_player));
+	game->player = ft_calloc(1, sizeof(t_entity));
 	if (!game->map || !game->assets || !game->player)
 		game->error_bitmask |= MALLOCS_ER;
 }
@@ -71,7 +74,9 @@ void	ft_boot_game(t_game *game, char *file)
 	ft_boot_map(game);
 	if (game->error_bitmask)
 		return ;
-	count_coins(&game->coins, game->map->layout);
+	count_a(&game->coins, &game->mob_count, game->map->layout);
 	find_exit(game->map);
 	ft_boot_player(game);
+	if (!ft_boot_mobs(game))
+		game->error_bitmask |= MLXLOAD_ER;
 }

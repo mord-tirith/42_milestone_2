@@ -1,6 +1,18 @@
 
 #include "so_long_bonus.h"
 
+static void	win_game(char c,t_game *game)
+{
+	int	moves;
+
+	if (c == 'E' && game->player->state && !game->coins)
+	{
+		moves = game->move_count;
+		ft_printf("Victory!\nYour move count: %d\n", moves);
+		ft_handle_exit(game);
+	}
+}
+
 int	ft_game_loop(void *g)
 {
 	int		x;
@@ -23,8 +35,7 @@ int	ft_game_loop(void *g)
 		game->map->layout[y][x] = '0';
 		game->coins -= 1;
 	}
-	if (collision == 'E' && !game->player->state && !game->coins)
-		ft_handle_exit(game);
+	win_game(collision, game);
 	return (0);
 }
 

@@ -3,7 +3,7 @@
 
 void	ft_boot_player(t_game *game)
 {
-	t_player	*p;
+	t_entity	*p;
 
 	p = game->player;
 	p->x = game->p_x * TILE_SIZE;

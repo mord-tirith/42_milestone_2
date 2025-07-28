@@ -1,5 +1,6 @@
 
 #include "so_long_bonus.h"
+#include "bonus_draw_lib.h"
 
 static int legal_move(t_game *game, int dir)
 {
@@ -26,7 +27,7 @@ void	ft_control_player(int key, t_game *game)
 {
 	int			temp_x;
 	int			temp_y;
-	t_player	*p;
+	t_entity	*p;
 
 	p = game->player;
 	temp_x = p->tile_x;
@@ -46,6 +47,7 @@ void	ft_control_player(int key, t_game *game)
 		p->state = 1;
 		p->curr = 0;
 		game->move_count++;
+		ft_tick_enemies(game);
 	}
 }
 

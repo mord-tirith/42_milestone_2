@@ -2,7 +2,7 @@
 #include "bonus_draw_lib.h"
 #include "so_long_bonus.h"
 
-static void	move_player(t_player *p)
+static void	move_player(t_entity *p)
 {
 	if (p->state == 0)
 		return ;
@@ -19,7 +19,7 @@ static void	move_player(t_player *p)
 		p->state = 0;
 }
 
-static int	vars_to_i(t_player *p)
+static int	vars_to_i(t_entity *p)
 {
 	int			i;
 	static int	offset[] = {0, 24, 56};

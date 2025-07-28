@@ -42,13 +42,13 @@ B_PARSER	= $(addprefix 0_parser/, $(BONUS_PAR))
 BONUS_ERR	= printer.c 
 B_ERRORS	= $(addprefix 1_error/, $(BONUS_ERR))
 
-BONUS_BOT	= boot.c detail_map.c map_boot.c player_boot.c reboot_map.c swiper.c
+BONUS_BOT	= boot.c detail_map.c map_boot.c mob_boot.c player_boot.c reboot_map.c swiper.c
 B_BOOT		= $(addprefix 2_boot/, $(BONUS_BOT))
 
-BONUS_ASE	= boot_assets.c load_map.c load_player.c others.c
+BONUS_ASE	= boot_assets.c load_map.c load_mobs.c load_player.c others.c
 B_ASSETS	= $(addprefix 3_assets/, $(BONUS_ASE))
 
-BONUS_DRA = background.c foreground.c looper.c midground.c 
+BONUS_DRA = background.c enemies.c foreground.c looper.c midground.c 
 B_DRAW		= $(addprefix 4_draw/, $(BONUS_DRA))
 
 BONUS_GAM	= control.c loop.c so_long_bonus.c

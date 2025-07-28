@@ -4,7 +4,7 @@
 
 static int mid_symbols(char c)
 {
-	if (c == '2' || c == '3' || c == 'C' || c == 'E')
+	if (c == '2' || c == '3' || c == 'C')
 		return (c);
 	return (0);
 }
