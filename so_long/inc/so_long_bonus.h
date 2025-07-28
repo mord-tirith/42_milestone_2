@@ -19,6 +19,13 @@ typedef enum e_num_macros
 	DEATH = 2
 }	t_num_macros;
 
+typedef enum e_errors
+{
+	FILE_EXIT = 1 << 0,
+	MEMO_EXIT = 1 << 1,
+	MAP__EXIT = 1 << 2
+}	t_errors;
+
 typedef struct s_map
 {
 	int		x;
@@ -45,11 +52,13 @@ typedef struct s_assets
 {
 	int		h;
 	int		w;
+	int		key_i;
 	char	*map_file;
-	t_img	a_coin;
-	t_img	a_exit[2];
+	t_img	a_exi[2];
 	t_img	a_map[52];
 	t_img	a_pla[96];
+	t_img	a_spi[3];
+	t_img	a_key[3];
 }	t_assets;
 
 typedef struct s_player
@@ -94,7 +103,7 @@ typedef enum e_flags
 	NOEXITS_ER = 1 << 9,
 	LOCKOIN_ER = 1 << 10,
 	LOCKEXI_ER = 1 << 11,
-	WRONGAC_ER = 1 << 12,
+	UNKNOWN_ER = 1 << 12,
 	MLXLOAD_ER = 1 << 13
 }	t_flags;
 
@@ -130,9 +139,6 @@ typedef enum e_flags
 # define MOVE_SPEED 8
 # define MAP_ASSETS "!%@$aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpPQRSTUvVwWxXyYzZ#"
 # define ASSET_ERROR -1
-# define DEATH_F (char *[]){ "du", "dl", "dd", "dr"}
-# define IDLE_F (char *[]){ "iu", "il", "id", "ir"}
-# define WALK_F (char *[]){ "wu", "wl", "wd", "wr"}
 /* Functions: */
 int	ft_valid_map(char *map_file);
 
@@ -143,17 +149,16 @@ void	ft_boot_assets(t_game *game);
 
 // Exit functions:
 void	ft_clean_assets(t_assets *assets, void *mlx);
-void	ft_exit_game(t_game *game);
 
 // Error management:
+int		ft_print_error(int mask);
 void	ft_resolve_error(int mask);
 
 // Draw functions:
-int		ft_draw_loop(void *g);
+void	ft_draw_loop(void *g);
 
 // Loop functions:
-int		ft_on_expose(void *g);
-int		ft_on_destroy(void *g);
+int		ft_game_loop(void *g);
 
 // Game functions:
 int		ft_control(int key, void *g);

@@ -1,7 +1,7 @@
 
 #include "so_long_bonus.h"
 
-int ft_boot_map(t_assets *a, void *mlx)
+int ft_boot_a_map(t_assets *a, void *mlx)
 {
 	int			i;
 	t_img		*t;
@@ -11,12 +11,13 @@ int ft_boot_map(t_assets *a, void *mlx)
 	while (MAP_ASSETS[i])
 	{
 		t = &a->a_map[i];
-		ft_sprintf(path, sizeof(path), "../../assets/map/%c.xpm", MAP_ASSETS[i]);
+		ft_sprintf(path, sizeof(path), "./assets/map/%c.xpm", MAP_ASSETS[i]);
 		t->img = mlx_xpm_file_to_image(mlx, path, &t->w, &t->h);
 		if (!t->img)
 			return (0);
 		t->data = (unsigned int *)mlx_get_data_addr(t->img,
 			&t->bpp, &t->line, &t->endian);
+		t->ppl = t->line / 4;
 		i++;
 	}
 	return (1);

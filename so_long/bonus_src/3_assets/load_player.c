@@ -7,13 +7,14 @@ static int	load_a(t_img *dst, void *mlx, char s, char d, int f)
 	const char	*relative;
 
 	ft_bzero(path, sizeof(path));
-	relative = "../../assets/anim/%c%c%d.xpm";
+	relative = "./assets/anim/%c%c%d.xpm";
 	ft_sprintf(path, sizeof(path), relative, s, d, f);
 	dst->img = mlx_xpm_file_to_image(mlx, path, &dst->w, &dst->h);
 	if (!dst->img)
 		return (0);
 	dst->data = (unsigned int *)mlx_get_data_addr(
 		dst->img, &dst->bpp, &dst->line, &dst->endian);
+	dst->ppl = dst->line / 4;
 	return (1);
 }
 

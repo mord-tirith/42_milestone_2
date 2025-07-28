@@ -1,115 +1,6 @@
-=== start of ./bonus_draw_lib.h ===
-
-#ifndef BONUS_DRAW_LIB_H
-# define BONUS_DRAW_LIB_H
-
-# include "so_long_bonus.h"
-
-/* Functions: */
-
-void	ft_draw_bg(t_game *game);
-void	ft_player_draw(t_game *game);
-#endif
-=== end of ./bonus_draw_lib.h ===
-=== start of ./main.c ===
-
-#include "so_long_bonus.h"
-
-int	ft_boot_map(t_assets *a, void *mlx);
-int	ft_boot_a_player(t_assets *a, void *mlx);
-
-void populate_temp_map(t_map *m)
-{
-    int i, j;
-
-    m->arr = malloc(sizeof(int *) * 5);
-    for (i = 0; i < 5; i++)
-    {
-        m->arr[i] = malloc(sizeof(int) * 4);
-        for (j = 0; j < 4; j++)
-            m->arr[i][j] = 0;
-    }
-}
-
-
-int main()
-{
-	t_game game;
-
-	game.mlx = mlx_init();
-	game.win = mlx_new_window(game.mlx, 256, 256, "test");
-
-	game.map = ft_calloc(sizeof(t_map), 1);
-	game.map->layout = malloc(sizeof(char *) * 5);
-	game.map->layout[0] = ft_strdup("oZZn");
-	game.map->layout[1] = ft_strdup("#zzT");
-	game.map->layout[2] = ft_strdup("#zzT");
-	game.map->layout[3] = ft_strdup("lLLh");
-	game.map->layout[4] = NULL;
-
-	populate_temp_map(game.map);
-	game.player = ft_calloc(sizeof(t_player), 1);
-	game.player->x = 64;
-	game.player->y = 64;
-	game.player->tile_x = 1;
-	game.player->tile_y = 1;
-	game.player->state = 0;
-	game.player->dir = 2;
-	game.player->curr = 1;
-
-	game.assets = ft_calloc(sizeof(t_assets), 1);
-	ft_boot_map(game.assets, game.mlx);
-	ft_boot_a_player(game.assets, game.mlx);
-	ft_prepare_frame(&game);
-	mlx_key_hook(game.win, ft_control, &game);
-	mlx_loop_hook(game.mlx, ft_draw_loop, &game);
-	mlx_loop(game.mlx);
-}
-=== end of ./main.c ===
-=== start of ./load_map.c ===
-
-#include "so_long_bonus.h"
-
-int ft_boot_map(t_assets *a, void *mlx)
-{
-	int			i;
-	t_img		*t;
-	static char	path[64];
-
-	i = 0;
-	while (MAP_ASSETS[i])
-	{
-		t = &a->a_map[i];
-		ft_sprintf(path, sizeof(path), "../../assets/map/%c.xpm", MAP_ASSETS[i]);
-		t->img = mlx_xpm_file_to_image(mlx, path, &t->w, &t->h);
-		if (!t->img)
-			return (0);
-		t->data = (unsigned int *)mlx_get_data_addr(t->img,
-			&t->bpp, &t->line, &t->endian);
-		t->ppl = t->line / 4;
-		i++;
-	}
-	return (1);
-}
-=== end of ./load_map.c ===
 === start of ./background.c ===
 
 #include "bonus_draw_lib.h"
-#include "so_long_bonus.h"
-
-static int	symbol_to_i(char c)
-{
-	int	i;
-
-	i = 0;
-	while (MAP_ASSETS[i])
-	{
-		if (MAP_ASSETS[i] == c)
-			return (i);
-		i++;
-	}
-	return (-1);
-}
 
 static void	blit_bg(t_img *dst, t_img *src, int x_off, int y_off)
 {
@@ -173,7 +64,7 @@ void	ft_draw_bg(t_game *game)
 		x = 0;
 		while (game->map->layout[y][x])
 		{
-			i = symbol_to_i(game->map->layout[y][x]);
+			i = game->map->arr[y][x];
 			t = &game->assets->a_map[i];
 			blit_bg(game->frame, t, x * TILE_SIZE, y * TILE_SIZE);
 			x++;
@@ -201,12 +92,13 @@ int	ft_draw_loop(void *g)
 {
 	long		time;
 	t_game		*game;
+	static int	frames[3] = {83333, 62500, 50000};
 	static long	last_time;
 
 	
 	game = (t_game *)g;
 	time = get_time_us();
-	if (time - last_time < 83333)
+	if (time - last_time < frames[game->player->state])
 		return (0);
 	ft_draw_bg(game);
 	ft_player_draw(game);
@@ -287,109 +179,3 @@ void	ft_player_draw(t_game *game)
 	blit_player(game->frame, sprite, game->player->x, game->player->y);
 }
 === end of ./foreground.c ===
-=== start of ./load_player.c ===
-
-#include "so_long_bonus.h"
-
-#define F_COUNT "579"
-#define S_NAMES "iwd"
-#define D_NAMES "uldr"
-
-static int	load_a(t_img *dst, void *mlx, char s, char d, int f)
-{
-	char		path[64];
-	const char	*relative;
-
-	ft_bzero(path, sizeof(path));
-	relative = "../../assets/anim/%c%c%d.xpm";
-	ft_sprintf(path, sizeof(path), relative, s, d, f);
-	dst->img = mlx_xpm_file_to_image(mlx, path, &dst->w, &dst->h);
-	if (!dst->img)
-		return (0);
-	dst->data = (unsigned int *)mlx_get_data_addr(
-		dst->img, &dst->bpp, &dst->line, &dst->endian);
-	dst->ppl = dst->line / 4;
-	return (1);
-}
-
-int	ft_boot_a_player(t_assets *a, void *mlx)
-{
-	int			f;
-	int			d;
-	static int	s;
-	static int	i;
-
-	while (s < 3)
-	{
-		d = 0;
-		while (d < 4)
-		{
-			f = 0;
-			while (f < (F_COUNT[s] - '0' + 1))
-			{
-				if (!load_a(&a->a_pla[i], mlx, S_NAMES[s], D_NAMES[d], f))
-					return (0);
-				i++;
-				f++;
-			}
-			d++;
-		}
-		s++;
-	}
-	return (1);
-}
-=== end of ./load_player.c ===
-=== start of ./control_player.c ===
-
-#include "so_long_bonus.h"
-
-static int legal_move(t_game *game, int dir)
-{
-	int	x;
-	int	y;
-
-	x = game->player->tile_x;
-	y = game->player->tile_y;
-	if (dir == UP)
-		y--;
-	else if (dir == LEFT)
-		x--;
-	else if (dir == DOWN)
-		y++;
-	else if (dir == RIGHT)
-		x++;
-	game->player->dir = dir;
-	return (game->map->arr[y][x] == 0);
-}
-
-void	move_player(void)
-{
-	return ;
-}
-
-int	ft_control(int key, void *g)
-{
-	int			temp_x;
-	int			temp_y;
-	t_game		*game;
-	t_player	*p;
-
-	game = (t_game *)g;
-	p = game->player;
-	if (p->state == 1)
-		return (0);
-	temp_x = p->tile_x;
-	temp_y = p->tile_y;
-	if ((key == KEY_W || key == KEY_UP) && legal_move(game, UP))
-		p->tile_y -= 1;
-	else if ((key == KEY_S || key == KEY_DOWN) && legal_move(game, DOWN))
-		p->tile_y += 1;
-	else if ((key == KEY_A || key == KEY_LEFT) && legal_move(game, LEFT))
-		p->tile_x -= 1;
-	else if ((key == KEY_D || key == KEY_RIGHT) && legal_move(game, RIGHT))
-		p->tile_x += 1;
-	if (temp_y != p->tile_y || temp_x != p->tile_x)
-		p->state = 1;
-	return (0);
-}
-=== end of ./control_player.c ===

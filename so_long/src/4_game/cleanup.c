@@ -57,6 +57,9 @@ void	ft_clean_map(t_map *map)
 
 int	ft_handle_exit(t_game *game)
 {
+	int	code;
+
+	code = ft_print_error(game->error_bitmask);
 	if (game->map)
 		ft_clean_map(game->map);
 	if (game->assets)
@@ -69,7 +72,7 @@ int	ft_handle_exit(t_game *game)
 		free(game->mlx);
 	if (game->player)
 		free(game->player);
-	exit(0);
+	exit(code);
 	return(0);
 }
 

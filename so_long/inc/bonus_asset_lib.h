@@ -9,9 +9,10 @@
 
 # define F_COUNT "579"
 # define D_NAMES "uldr"
-# define S_NAMES "imd"
+# define S_NAMES "iwd"
 
-int	ft_boot_map(t_assets *a, void *mlx);
+int	ft_boot_a_others(t_assets *a, void *mlx);
+int	ft_boot_a_map(t_assets *a, void *mlx);
 int	ft_boot_a_player(t_assets *a, void *mlx);
 
 #endif

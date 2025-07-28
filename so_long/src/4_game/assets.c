@@ -21,26 +21,15 @@ static int	boot_a_map(t_assets *a, void *mlx)
 	return (1);
 }
 
-static int	boot_a_err(t_assets *a, void *mlx)
-{
-	char	*path;
-
-	path = "./assets/a_err.xpm";
-	a->a_err = mlx_xpm_file_to_image(mlx, path, &a->w, &a->h);
-	if (!a->a_err)
-		return (0);
-	return (1);
-}
-
 static int	boot_c_e(t_assets *a, void *mlx)
 {
 	char	*path;
 
-	path = "./assets/others/C.xpm";
+	path = "./assets/gen/key.xpm";
 	a->a_coin = mlx_xpm_file_to_image(mlx, path, &a->w, &a->h);
-	path = "./assets/others/E.xpm";
+	path = "./assets/gen/exit0.xpm";
 	a->a_exit_c = mlx_xpm_file_to_image(mlx, path, &a->w, &a->h);
-	path = "./assets/others/W.xpm";
+	path = "./assets/gen/exit1.xpm";
 	a->a_exit_o = mlx_xpm_file_to_image(mlx, path, &a->w, &a->h);
 	if (!a->a_coin || !a->a_exit_c || !a->a_exit_o)
 		return (0);
@@ -70,7 +59,7 @@ static int	boot_a_pla(t_assets *a, void *mlx)
 void	ft_boot_assets(t_game *game)
 {
 	if (!boot_a_map(game->assets, game->mlx) ||
-	!boot_a_err(game->assets, game->mlx) || !boot_a_pla(game->assets, game->mlx) ||
+	!boot_a_pla(game->assets, game->mlx) ||
 	!boot_c_e(game->assets, game->mlx))
 		game->error_bitmask |= MLXLOAD_ER;
 }

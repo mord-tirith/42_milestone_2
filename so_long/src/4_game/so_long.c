@@ -19,6 +19,8 @@ void	run_game(t_game *game)
 	mlx_hook(game->win, 17, 0, ft_handle_exit, game);
 	mlx_key_hook(game->win, ft_key_handler, game);
 	ft_boot_assets(game);
+	if (game->error_bitmask)
+		ft_handle_exit(game);
 	mlx_loop_hook(game->mlx, ft_draw_loop, game);
 	mlx_loop(game->mlx);
 }
@@ -32,9 +34,9 @@ int	main(int ac, char **av)
 		return (ft_perror(1, "%s", "Use: ./so_long MAP_FILE.ber\n"));
 	invalid_run = ft_valid_map(av[1]);
 	if (invalid_run)
-		return (ft_perror(2, "%s", "Parsing problem!\n"));
+		return (ft_print_error(invalid_run));
 	ft_boot_game(&game, av[1]);
 	if (game.error_bitmask)
-		return (ft_perror(2, "%s", "Boot problem!\n"));
+		return (ft_handle_exit(&game));
 	run_game(&game);
 }

@@ -17,7 +17,9 @@ static int legal_move(t_game *game, int dir)
 	else if (dir == RIGHT)
 		x++;
 	game->player->dir = dir;
-	return (game->map->arr[y][x] == 0);
+	if (game->map->layout[y][x] == 'E' && game->coins)
+		return (0);
+	return (game->map->arr[y][x] == 49);
 }
 
 void	ft_control_player(int key, t_game *game)
@@ -29,7 +31,7 @@ void	ft_control_player(int key, t_game *game)
 	p = game->player;
 	temp_x = p->tile_x;
 	temp_y = p->tile_y;
-	if (p->state == 1)
+	if (p->state)
 		return ;
 	if ((key == KEY_W || key == KEY_UP) && legal_move(game, UP))
 		p->tile_y -= 1;
@@ -43,6 +45,7 @@ void	ft_control_player(int key, t_game *game)
 	{	
 		p->state = 1;
 		p->curr = 0;
+		game->move_count++;
 	}
 }
 
@@ -55,7 +58,7 @@ int	ft_key_handler(int key, void *g)
 	 key == KEY_S || key == KEY_DOWN || key == KEY_D || key == KEY_RIGHT)
 		ft_control_player(key, game);
 	else if (key == KEY_ESC)
-			ft_exit_game(game);
+			ft_handle_exit(game);
 	return (0);
 }
 

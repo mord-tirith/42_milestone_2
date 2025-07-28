@@ -1,20 +1,5 @@
 
 #include "bonus_draw_lib.h"
-#include "so_long_bonus.h"
-
-static int	symbol_to_i(char c)
-{
-	int	i;
-
-	i = 0;
-	while (MAP_ASSETS[i])
-	{
-		if (MAP_ASSETS[i] == c)
-			return (i);
-		i++;
-	}
-	return (-1);
-}
 
 static void	blit_bg(t_img *dst, t_img *src, int x_off, int y_off)
 {
@@ -78,7 +63,7 @@ void	ft_draw_bg(t_game *game)
 		x = 0;
 		while (game->map->layout[y][x])
 		{
-			i = symbol_to_i(game->map->layout[y][x]);
+			i = game->map->arr[y][x];
 			t = &game->assets->a_map[i];
 			blit_bg(game->frame, t, x * TILE_SIZE, y * TILE_SIZE);
 			x++;

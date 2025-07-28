@@ -4,7 +4,7 @@
 
 static void	move_player(t_player *p)
 {
-	if (p->state != 1)
+	if (p->state == 0)
 		return ;
 	if (p->x < p->tile_x * TILE_SIZE)
 		p->x += MOVE_SPEED;
@@ -64,7 +64,7 @@ void	ft_player_draw(t_game *game)
 
 	i = vars_to_i(game->player);
 	sprite = &game->assets->a_pla[i];
-	if (game->player->state == 1)
+	if (game->player->state)
 		move_player(game->player);
 	blit_player(game->frame, sprite, game->player->x, game->player->y);
 }

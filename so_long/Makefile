@@ -19,7 +19,7 @@ MLX_DIR			= minilibx-linux/
 PAR_FILES	= file.c flood.c maparse.c ones.c uniques.c
 PARSER		= $(addprefix 0_parser/, $(PAR_FILES))
 
-ERR_FILES = 
+ERR_FILES = printer.c 
 ERRORS		= $(addprefix 1_error/, $(ERR_FILES))
 
 BOT_FILES = boot.c detail_map.c map_boot.c player_boot.c reboot_map.c swiper.c
@@ -31,30 +31,33 @@ DRAW			= $(addprefix 3_draw/, $(DRA_FILES))
 GAM_FILES = assets.c cleanup.c hooks.c so_long.c
 GAME			= $(addprefix 4_game/, $(GAM_FILES))
 
-SRC_FILES	= $(PARSER) $(BOOT) $(DRAW) $(GAME) 
+SRC_FILES	= $(PARSER) $(ERRORS) $(BOOT) $(DRAW) $(GAME) 
 SRC				= $(addprefix $(SRC_DIR), $(SRC_FILES))
 OBJ				:= $(patsubst $(SRC_DIR)%.c, $(OBJ_DIR)%.o, $(SRC))
 
 
-BONUS_PAR	= file.c flood.c maparse.c ones.c uniques.c
+BONUS_PAR	= file.c flood.c maparse.c ones.c uniques.c valids.c
 B_PARSER	= $(addprefix 0_parser/, $(BONUS_PAR))
 
-BONUS_ERR	= 
+BONUS_ERR	= printer.c 
 B_ERRORS	= $(addprefix 1_error/, $(BONUS_ERR))
 
 BONUS_BOT	= boot.c detail_map.c map_boot.c player_boot.c reboot_map.c swiper.c
 B_BOOT		= $(addprefix 2_boot/, $(BONUS_BOT))
 
-BONUS_ASE	= boot_assets.c load_map.c load_player.c
+BONUS_ASE	= boot_assets.c load_map.c load_player.c others.c
 B_ASSETS	= $(addprefix 3_assets/, $(BONUS_ASE))
 
-BONUS_DRA = background.c foreground.c looper.c 
+BONUS_DRA = background.c foreground.c looper.c midground.c 
 B_DRAW		= $(addprefix 4_draw/, $(BONUS_DRA))
 
-BONUS_GAM	= control_player.c so_long_bonus.c
+BONUS_GAM	= control.c loop.c so_long_bonus.c
 B_GAME		= $(addprefix 5_game/, $(BONUS_GAM))
 
-BON_FILES	= $(B_PARSER) $(B_ERRORS) $(B_BOOT) $(B_ASSETS) $(B_DRAW) $(B_GAME)
+BONUS_EXE	= assets.c manager.c pointers.c
+B_EXIT		= $(addprefix 6_exit/, $(BONUS_EXE))
+
+BON_FILES	= $(B_PARSER) $(B_ERRORS) $(B_BOOT) $(B_ASSETS) $(B_DRAW) $(B_GAME) $(B_EXIT)
 BONUS_SRC	= $(addprefix $(BON_DIR), $(BON_FILES))
 BONUS_OBJ	:= $(patsubst $(BON_DIR)%.c, $(BON_OBJ_DIR)%.o, $(BONUS_SRC))
 
@@ -138,7 +141,7 @@ $(BON_OBJ_DIR)%.o: $(BON_DIR)%.c
 	@$(CC) $(CFLAGS) -I$(INC_DIR) -c $< -o $@
 
 clean:
-	@if ls $(OBJ) 1>/dev/null 2>&1; then \
+	@if [ -d "$(OBJ_DIR)" ] || [ -d "$(BON_OBJ_DIR)" ]; then \
 		rm -rfd $(OBJ_DIR) $(BON_OBJ_DIR); \
 		echo "${YELLOW}.o files removed${RESET}"; \
 	else \
@@ -146,7 +149,7 @@ clean:
 	fi
 
 fclean: clean
-	@if ls $(NAME) 1>/dev/null 2>&1; then \
+	@if [ -f "$(NAME)" ] || [ -f "$(BONUS_NAME)" ]; then \
 		rm -f $(NAME) $(BONUS_NAME); \
 		echo "${YELLOW}Uninstalled ${PNAME}${RESET}"; \
 	else \
@@ -180,4 +183,5 @@ banner:
 	@echo "▓▓      ▓▓▓  ▓▓▓▓  ▓▓▓▓▓▓▓▓  ▓▓▓▓▓▓▓▓  ▓▓▓▓  ▓▓  ▓  ▓  ▓▓  ▓▓▓   ▓"
 	@echo "███████  ██  ████  ████████  ████████  ████  ██  ██    ██  ████  █"
 	@echo "██      ████      █████████        ███      ███  ███   ███      ██"
-	@echo "██████████████████████████████████████████████████████████████████${RESET}"
+	@echo "██████████████████████████████████████████████████████████████████"
+	@echo "                                                       ${PINK}by thenriqu${RESET}"

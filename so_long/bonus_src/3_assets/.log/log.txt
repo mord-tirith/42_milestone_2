@@ -8,13 +8,15 @@ static int	load_a(t_img *dst, void *mlx, char s, char d, int f)
 	const char	*relative;
 
 	ft_bzero(path, sizeof(path));
-	relative = "../../assets/anim/%c%c%d.xpm";
+	relative = "./assets/anim/%c%c%d.xpm";
 	ft_sprintf(path, sizeof(path), relative, s, d, f);
 	dst->img = mlx_xpm_file_to_image(mlx, path, &dst->w, &dst->h);
 	if (!dst->img)
 		return (0);
 	dst->data = (unsigned int *)mlx_get_data_addr(
 		dst->img, &dst->bpp, &dst->line, &dst->endian);
+	dst->ppl = dst->line / 4;
+	return (1);
 }
 
 int	ft_boot_a_player(t_assets *a, void *mlx)
@@ -32,7 +34,7 @@ int	ft_boot_a_player(t_assets *a, void *mlx)
 			f = 0;
 			while (f < (F_COUNT[s] - '0' + 1))
 			{
-				if (!load_a(a->a_pla[i], mlx, S_NAMES[s], D_NAMES[d], f))
+				if (!load_a(&a->a_pla[i], mlx, S_NAMES[s], D_NAMES[d], f))
 					return (0);
 				i++;
 				f++;
@@ -48,7 +50,7 @@ int	ft_boot_a_player(t_assets *a, void *mlx)
 
 #include "so_long_bonus.h"
 
-int ft_boot_map(t_assets *a, void *mlx)
+int ft_boot_a_map(t_assets *a, void *mlx)
 {
 	int			i;
 	t_img		*t;
@@ -58,12 +60,13 @@ int ft_boot_map(t_assets *a, void *mlx)
 	while (MAP_ASSETS[i])
 	{
 		t = &a->a_map[i];
-		ft_sprintf(path, sizeof(path), "../../assets/map/%c.xpm", MAP_ASSETS[i]);
+		ft_sprintf(path, sizeof(path), "./assets/map/%c.xpm", MAP_ASSETS[i]);
 		t->img = mlx_xpm_file_to_image(mlx, path, &t->w, &t->h);
 		if (!t->img)
 			return (0);
 		t->data = (unsigned int *)mlx_get_data_addr(t->img,
 			&t->bpp, &t->line, &t->endian);
+		t->ppl = t->line / 4;
 		i++;
 	}
 	return (1);
@@ -73,10 +76,44 @@ int ft_boot_map(t_assets *a, void *mlx)
 
 # include "bonus_asset_lib.h"
 
-void	ft_load_assets(t_game *game)
+void	ft_boot_assets(t_game *game)
 {
 	if (!ft_boot_a_player(game->assets, game->mlx) ||
-	 ! ft_boot_map(game->assets, game->mlx))
+	 !ft_boot_a_map(game->assets, game->mlx) ||
+	!ft_boot_a_others(game->assets, game->mlx))
 		game->error_bitmask |= MLXLOAD_ER;
 }
 === end of ./boot_assets.c ===
+=== start of ./others.c ===
+
+#include "bonus_asset_lib.h"
+
+static int	load_spikes(t_assets *a, void *mlx)
+{
+	int			i;
+	t_img		*t;
+	static char	path[64];
+
+	i = 0;
+	while (i < 3)
+	{
+		t = &a->a_spi[i];
+		ft_sprintf(path, sizeof(path), "./assets/gen/s%d.xpm", i);
+		t->img = mlx_xpm_file_to_image(mlx, path, &t->w, &t->h);
+		if (!t->img)
+			return (0);
+		t->data = (unsigned int *)mlx_get_data_addr(t->img,
+			&t->bpp, &t->line, &t->endian);
+		t->ppl = t->line / 4;
+		i++;
+	}
+	return (1);
+}
+
+int	ft_boot_a_others(t_assets *a, void *mlx)
+{
+	if (!load_spikes(a, mlx))
+		return (0);
+	return (1);
+}
+=== end of ./others.c ===

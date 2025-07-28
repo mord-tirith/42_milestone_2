@@ -2,33 +2,39 @@
 #include "bonus_parse_lib.h"
 #include <stdlib.h>
 
-static void	coin_flood(int y, int x, t_validators *v)
+static void	coin_flood(int y, int x, t_validators *v, int m)
 {
 	if (x < 0 || y < 0 || x >= v->x || y >= v->y || v->coin_map[y][x] == '1' ||
 	v->coin_map[y][x] == 'F' || v->coin_map[y][x] == 'E')
 		return ;
+	if ((v->coin_map[y][x] == '2' && m % 2 != 0) ||
+		(v->coin_map[y][x] == '3' && m % 2 == 0))
+		return ;
 	if (v->coin_map[y][x] == 'C')
 		v->coins -= 1;
 	v->coin_map[y][x] = 'F';
-	coin_flood(y - 1, x, v);
-	coin_flood(y, x - 1, v);
-	coin_flood(y + 1, x, v);
-	coin_flood(y, x + 1, v);
+	coin_flood(y - 1, x, v, m + 1);
+	coin_flood(y, x - 1, v, m + 1);
+	coin_flood(y + 1, x, v, m + 1);
+	coin_flood(y, x + 1, v, m + 1);
 }
 
-static int	exit_flood(int y, int x, t_validators *v)
+static int	exit_flood(int y, int x, t_validators *v, int m)
 {
 
 	if (x < 0 || y < 0 || x >= v->x || y >= v->y
 		|| v->exit_map[y][x] == '1' || v->exit_map[y][x] == 'F')
 		return (0);
+	if ((v->exit_map[y][x] == '2' && m % 2 != 0) ||
+		(v->exit_map[y][x] == '3' && m % 2 == 0))
+		return (0);
 	if (v->exit_map[y][x] == 'E')
 		return (1);
 	v->exit_map[y][x] = 'F';
-	return (exit_flood(y - 1, x, v) ||
-	exit_flood(y, x + 1, v) ||
-	exit_flood(y + 1, x, v) ||
-	exit_flood(y, x - 1, v));
+	return (exit_flood(y - 1, x, v, m + 1) ||
+	exit_flood(y, x + 1, v, m + 1) ||
+	exit_flood(y + 1, x, v, m + 1) ||
+	exit_flood(y, x - 1, v, m + 1));
 }
 
 static char	**clean_arr(t_validators *v)
@@ -84,9 +90,9 @@ void	ft_flood_map(t_validators *v)
 		return ;
 	}
 	if (v->coin_map)
-		coin_flood(v->p_y, v->p_x, v);
+		coin_flood(v->p_y, v->p_x, v, 0);
 	if (v->exit_map)
-		v->exit = exit_flood(v->p_y, v->p_x, v);
+		v->exit = exit_flood(v->p_y, v->p_x, v, 0);
 	if (v->coins)
 		v->error_mask |= LOCKOIN_ER;
 	if (!v->exit)

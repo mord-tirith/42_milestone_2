@@ -16,6 +16,13 @@ typedef enum e_dir
 	RIGHT = 3
 }	t_dir;
 
+typedef enum e_errors
+{
+	FILE_EXIT = 1 << 0,
+	MEMO_EXIT = 1 << 1,
+	MAP__EXIT = 1 << 2
+}	t_errors;
+
 typedef struct s_map
 {
 	int		x;
@@ -77,7 +84,7 @@ typedef enum e_flags
 	NOEXITS_ER = 1 << 9,
 	LOCKOIN_ER = 1 << 10,
 	LOCKEXI_ER = 1 << 11,
-	WRONGAC_ER = 1 << 12,
+	UNKNOWN_ER = 1 << 12,
 	MLXLOAD_ER = 1 << 13
 }	t_flags;
 
@@ -124,6 +131,7 @@ void	ft_boot_assets(t_game *game);
 void	ft_exit_game(t_game *game);
 
 // Error management:
+int		ft_print_error(int mask);
 void	ft_resolve_error(int mask);
 
 // Draw functions:
