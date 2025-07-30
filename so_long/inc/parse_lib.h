@@ -28,6 +28,7 @@ typedef struct s_validators
 /* Macros: */
 
 /* Functions: */
+void	ft_valid_symbols(t_validators *v);
 void	ft_uniques(t_validators *v);
 void	ft_flood_map(t_validators *v);
 void	ft_check_ones(t_validators *v);

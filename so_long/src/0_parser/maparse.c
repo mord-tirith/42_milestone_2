@@ -55,6 +55,7 @@ int	ft_valid_map(char *map_file)
 	ft_uniques(&v);
 	if (v.error_mask)
 		return (deboot_validators(&v));
+	ft_valid_symbols(&v);
 	ft_check_ones(&v);
 	ft_flood_map(&v);
 	deboot_validators(&v);

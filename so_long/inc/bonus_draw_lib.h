@@ -8,6 +8,6 @@
 
 void	ft_draw_bg(t_game *game);
 void	ft_draw_mg(t_game *game);
-void	ft_player_draw(t_game *game);
+void	ft_draw_entities(t_game *game);
 void	ft_tick_enemies(t_game *game);
 #endif

@@ -16,7 +16,7 @@ INC_DIR			= inc/
 MLX_DIR			= minilibx-linux/
 
 # File Variables:
-PAR_FILES	= file.c flood.c maparse.c ones.c uniques.c
+PAR_FILES	= file.c flood.c maparse.c ones.c uniques.c valids.c
 PARSER		= $(addprefix 0_parser/, $(PAR_FILES))
 
 ERR_FILES = printer.c 
@@ -48,10 +48,10 @@ B_BOOT		= $(addprefix 2_boot/, $(BONUS_BOT))
 BONUS_ASE	= boot_assets.c load_map.c load_mobs.c load_player.c others.c
 B_ASSETS	= $(addprefix 3_assets/, $(BONUS_ASE))
 
-BONUS_DRA = background.c enemies.c foreground.c looper.c midground.c 
+BONUS_DRA = background.c foreground.c looper.c midground.c 
 B_DRAW		= $(addprefix 4_draw/, $(BONUS_DRA))
 
-BONUS_GAM	= control.c loop.c so_long_bonus.c
+BONUS_GAM	= control.c enemy_ai.c loop.c so_long_bonus.c
 B_GAME		= $(addprefix 5_game/, $(BONUS_GAM))
 
 BONUS_EXE	= assets.c manager.c pointers.c

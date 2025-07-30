@@ -1,5 +1,6 @@
 
 #include "bonus_parse_lib.h"
+#include "so_long_bonus.h"
 #include <stdlib.h>
 
 static void	coin_flood(int y, int x, t_validators *v, int m)
@@ -99,4 +100,6 @@ void	ft_flood_map(t_validators *v)
 		v->error_mask |= LOCKOIN_ER;
 	if (!v->exit)
 		v->error_mask |= LOCKEXI_ER;
+	if (v->error_mask & MOBHITS_ER && (v->exit && !v->coins))
+		v->error_mask &= ~MOBHITS_ER;
 }

@@ -54,7 +54,7 @@ void	ft_draw_loop(void *g)
 	ft_draw_bg(game);
 	key_loop(game);
 	ft_draw_mg(game);
-	ft_player_draw(game);
+	ft_draw_entities(game);
 	mlx_put_image_to_window(game->mlx, game->win, game->frame->img, 0, 0);
 	print_moves(game);
 	last_time = time;

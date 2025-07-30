@@ -162,6 +162,7 @@ void	ft_draw_loop(void *g);
 
 // Loop functions:
 int		ft_game_loop(void *g);
+void	ft_tick_enemies(t_game *game);
 
 // Game functions:
 int		ft_control(int key, void *g);
