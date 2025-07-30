@@ -35,7 +35,7 @@ static int	translate_symbol(char c)
 			return (i);
 		i++;
 	}
-	return (ASSET_ERROR);
+	return (0);
 }
 
 void	ft_detail_map(t_map *map)

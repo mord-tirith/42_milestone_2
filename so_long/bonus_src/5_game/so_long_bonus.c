@@ -25,17 +25,36 @@ void	run_game(t_game *game)
 	mlx_loop(game->mlx);
 }
 
+static int	valid_input(int ac, char **av, int *f)
+{
+	*f = 0;
+	if (ac != 2 && ac != 3)
+		return (ft_perror(0, "Use: ./so_long_bonus MAP_FILE.ber\n"));
+	if (ac == 3)
+	{
+		if (ft_strncmp(av[1], "-f", 3) && ft_strncmp(av[2], "-f", 3))
+			return (ft_perror(0, "Use: ./so_long_bonus -f MAP_FILE.ber\n"));
+		*f = 1;
+		if (!ft_strncmp(av[1], "-f", 3))
+			return (2);
+	}
+	return (1);
+}
+
 int	main(int ac, char **av)
 {
+	int		file;
+	int		forced;
 	int		invalid_run;
 	t_game	game;
 
-	if (ac != 2)
-		return (ft_perror(1, "%s", "Use: ./so_long_bonus MAP_FILE.ber\n"));
-	invalid_run = ft_valid_map(av[1]);
+	file = valid_input(ac, av, &forced);
+	if (!file)
+		return (0);
+	invalid_run = ft_valid_map(av[file], forced);
 	if (invalid_run)
 		return (ft_print_error(invalid_run));
-	ft_boot_game(&game, av[1]);
+	ft_boot_game(&game, av[file]);
 	if (game.error_bitmask)
 		return (ft_handle_exit(&game));
 	run_game(&game);

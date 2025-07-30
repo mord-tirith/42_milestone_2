@@ -36,7 +36,7 @@ SRC				= $(addprefix $(SRC_DIR), $(SRC_FILES))
 OBJ				:= $(patsubst $(SRC_DIR)%.c, $(OBJ_DIR)%.o, $(SRC))
 
 
-BONUS_PAR	= file.c flood.c maparse.c ones.c uniques.c valids.c
+BONUS_PAR	= enemy.c file.c flood.c maparse.c move.c ones.c uniques.c valids.c
 B_PARSER	= $(addprefix 0_parser/, $(BONUS_PAR))
 
 BONUS_ERR	= printer.c 

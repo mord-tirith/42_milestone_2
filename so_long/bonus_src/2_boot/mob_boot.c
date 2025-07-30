@@ -28,7 +28,7 @@ int	ft_boot_mobs(t_game *game)
 	static int	y;
 	static int	i;
 
-	if (!game->mobs)
+	if (!game->mob_count)
 		return (no_enemies(game));
 	game->mobs = ft_calloc(sizeof(t_entity *), game->mob_count);
 	while (game->map->layout[y])
@@ -39,10 +39,10 @@ int	ft_boot_mobs(t_game *game)
 			if (game->map->layout[y][x] == 'M')
 			{
 				boot_mob(game, y, x, i);
+				if (!game->mobs[i])
+					return (0);
 				i++;
 			}
-			if (!game->mobs[i])
-				return (0);
 			x++;
 		}
 		y++;

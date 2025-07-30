@@ -107,7 +107,8 @@ typedef enum e_flags
 	LOCKOIN_ER = 1 << 10,
 	LOCKEXI_ER = 1 << 11,
 	UNKNOWN_ER = 1 << 12,
-	MLXLOAD_ER = 1 << 13
+	MLXLOAD_ER = 1 << 13,
+	MOBHITS_ER = 1 << 14
 }	t_flags;
 
 /* System Dependant Macros: */
@@ -137,13 +138,12 @@ typedef enum e_flags
 # endif
 
 /* Macros: */
-# define GAME_NAME "so_long"
+# define GAME_NAME "so_long_bonus"
 # define TILE_SIZE 64
 # define MOVE_SPEED 8
 # define MAP_ASSETS "!%@$aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpPQRSTUvVwWxXyYzZ#"
-# define ASSET_ERROR -1
 /* Functions: */
-int	ft_valid_map(char *map_file);
+int	ft_valid_map(char *map_file, int f);
 
 // Boot functions:
 void	ft_prepare_frame(t_game *game);

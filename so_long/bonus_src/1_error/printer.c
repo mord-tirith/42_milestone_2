@@ -6,10 +6,12 @@ static int	flood_error(int m)
 	int	result;
 
 	result = 0;
-	if (m &= LOCKOIN_ER)
+	if (m & LOCKOIN_ER && !(m & MOBHITS_ER))
 		result |= ft_perror(MAP__EXIT, "Unreacheable coin(s)\n");
-	if (m &= LOCKEXI_ER)
+	if (m & LOCKEXI_ER && !(m & MOBHITS_ER))
 		result |= ft_perror(MAP__EXIT, "No path to exit\n");
+	if (m & MOBHITS_ER && (m & LOCKEXI_ER || m & LOCKOIN_ER))
+		ft_printf("Map could be impossible due to mob movement, run with -f to force attempt\n");
 	return (result);
 }
 

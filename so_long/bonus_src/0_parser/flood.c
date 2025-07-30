@@ -8,7 +8,8 @@ static void	coin_flood(int y, int x, t_validators *v, int m)
 	v->coin_map[y][x] == 'F' || v->coin_map[y][x] == 'E')
 		return ;
 	if ((v->coin_map[y][x] == '2' && m % 2 != 0) ||
-		(v->coin_map[y][x] == '3' && m % 2 == 0))
+		(v->coin_map[y][x] == '3' && m % 2 == 0) ||
+			(v->enemies && ft_enemy_collision(y, x, m, v)))
 		return ;
 	if (v->coin_map[y][x] == 'C')
 		v->coins -= 1;
@@ -26,7 +27,8 @@ static int	exit_flood(int y, int x, t_validators *v, int m)
 		|| v->exit_map[y][x] == '1' || v->exit_map[y][x] == 'F')
 		return (0);
 	if ((v->exit_map[y][x] == '2' && m % 2 != 0) ||
-		(v->exit_map[y][x] == '3' && m % 2 == 0))
+		(v->exit_map[y][x] == '3' && m % 2 == 0) ||
+			(v->enemies && ft_enemy_collision(y, x, m, v)))
 		return (0);
 	if (v->exit_map[y][x] == 'E')
 		return (1);

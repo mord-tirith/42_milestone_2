@@ -1,0 +1,662 @@
+=== start of ./uniques.c ===
+
+#include "bonus_parse_lib.h"
+
+static void	valid_e(t_validators *v)
+{
+	int	x;
+	int	y;
+
+	y = 0;
+	while (v->arr[y])
+	{
+		x = 0;
+		while (v->arr[y][x])
+		{
+			if (v->arr[y][x] == 'E' && !v->exit)
+				v->exit = 1;
+			else if (v->arr[y][x] == 'E')
+				v->error_mask |= EXITPLU_ER;
+			x++;
+		}
+		y++;
+	}
+	if (!v->exit)
+		v->error_mask |= NOEXITS_ER;
+}
+
+static void	valid_p(t_validators *v)
+{
+	int	x;
+	int	y;
+
+	y = 0;
+	while (v->arr[y])
+	{
+		x = 0;
+		while (v->arr[y][x])
+		{
+			if (v->arr[y][x] == 'P' && !v->player)
+			{
+				v->player = 1;
+				v->p_x = x;
+				v->p_y = y;
+			}
+			else if (v->arr[y][x] == 'P')
+				v->error_mask |= PLAYERS_ER;
+			x++;
+		}
+		y++;
+	}
+	if (!v->player)
+		v->error_mask |= NOPLAYE_ER;
+}
+
+static void	valid_c(t_validators *v)
+{
+	int	y;
+	int	x;
+
+	y = 0;
+	while (v->arr[y])
+	{
+		x = 0;
+		while (v->arr[y][x])
+		{
+			if (v->arr[y][x] == 'C')
+				v->coins++;
+			x++;
+		}
+		y++;
+	}
+	// TODO: make coins optional if enemies in place
+	if (!v->coins)
+		v->error_mask |= NOCOINS_ER;
+}
+
+static int	valid_x(t_validators *v)
+{
+	int		i;
+
+	i = 0;
+	v->x = ft_strlen(v->arr[0]);
+	while (v->arr[i])
+	{
+		if ((int)ft_strlen(v->arr[i]) != v->x)
+		{
+			v->error_mask |= X_VALUE_ER;
+			return (0);
+		}
+		i++;
+	}
+	v->y = i;
+	return (1);
+}
+
+void	ft_uniques(t_validators *v)
+{
+	if (!valid_x(v))
+		return ;
+	valid_p(v);
+	valid_e(v);
+	valid_c(v);
+}
+=== end of ./uniques.c ===
+=== start of ./enemy.c ===
+#include "bonus_parse_lib.h"
+#include "so_long_bonus.h"
+#include <stdlib.h>
+
+static int	add_enemy(int x, int y, t_point **t)
+{
+	t_point	*new;
+	t_point *temp;
+
+	new = calloc(sizeof(t_point), 1);
+	if (!new)
+		return (0);
+	new->x = x;
+	new->y = y;
+	new->og_x = x;
+	new->og_y = y;
+	new->alive = 1;
+	if (!*t)
+		*t = new;
+	else
+	{
+		temp = *t;
+		while (temp->next)
+			temp = temp->next;
+		temp->next = new;
+	}
+	return (1);
+}
+
+static int	known_enemies(int x, int y, t_validators *v)
+{
+	t_point	*t;
+
+	t = *(v->enemies);
+	while (t)
+	{
+		if (t->y == y && t->x == x)
+			return (1);
+		t = t->next;
+	}
+	return (add_enemy(x, y, v->enemies));
+}
+
+int	ft_enemy_collision(int y, int x, int move, t_validators *v)
+{
+	t_point	*t;
+
+	ft_move_enemies(v->enemies, v->arr, move);
+	t = *(v->enemies);
+	while (t)
+	{
+		if (t->x == x && t->y == y)
+		{
+			v->error_mask |= SUGGESTS_F;
+			return (1);
+		}
+		t = t->next;
+	}
+	return (0);
+}
+
+int	ft_start_enemies(t_validators *v)
+{
+	int					y;
+	int					x;
+
+	y = 0;
+	while (v->arr[y])
+	{
+		x = 0;
+		while (v->arr[y][x])
+		{
+			if (v->arr[y][x] == 'M')
+			{
+				if (!known_enemies(x, y, v))
+					return (0);
+			}
+			x++;
+		}
+		y++;
+	}
+	return (1);
+}
+=== end of ./enemy.c ===
+=== start of ./maparse.c ===
+
+#include "bonus_parse_lib.h"
+#include <stddef.h>
+#include <stdlib.h>
+
+static void	free2d(char **arr)
+{
+	int	i;
+
+	i = 0;
+	while (arr[i])
+	{
+		free(arr[i]);
+		i++;
+	}
+	free(arr);
+}
+
+static void	free_ll(t_point **t)
+{
+	t_point	*old_temp;
+	t_point *new_temp;
+
+	new_temp = *(t);
+	while (new_temp)
+	{
+		old_temp = new_temp;
+		new_temp = new_temp->next;
+		free(old_temp);
+	}
+}
+
+static int	deboot_validators(t_validators *v)
+{
+	if (v->arr)
+		free2d(v->arr);
+	if (v->coin_map)
+		free2d(v->coin_map);
+	if (v->exit_map)
+		free2d(v->exit_map);
+	if (v->enemies)
+		free_ll(v->enemies);
+	return (v->error_mask);
+}
+
+static t_validators	*boot_validators(char *file, t_validators *v)
+{
+	v->error_mask = 0;
+	v->coins = 0;
+	v->exit = 0;
+	v->player = 0;
+	v->x = 0;
+	v->y = 0;
+	v->flood = 0;
+	v->enemies = NULL;
+	v->arr = NULL;
+	v->coin_map = NULL;
+	v->exit_map = NULL;
+	v->map_file = file;
+	return (v);
+}
+
+int	ft_valid_map(char *map_file, int f)
+{
+	t_validators	v;
+
+	boot_validators(map_file, &v);
+	ft_file_check(&v);
+	if (v.error_mask)
+		return (v.error_mask);
+	ft_uniques(&v);
+	if (v.error_mask)
+		return (deboot_validators(&v));
+	ft_check_ones(&v);
+	ft_start_enemies(&v);
+	if (f)
+		ft_flood_map(&v);
+	ft_valid_symbols(&v);
+	deboot_validators(&v);
+	return (v.error_mask);
+}
+
+=== end of ./maparse.c ===
+=== start of ./ones.c ===
+
+#include "bonus_parse_lib.h"
+
+static int	top_and_bottom(t_validators *v)
+{
+	int	i;
+	int	y;
+
+	i = 0;
+	y = v->y - 1;
+	while (v->arr[0][i])
+	{
+		if (v->arr[0][i] != '1')
+			return (0);
+		i++;
+	}
+	i = 0;
+	while (v->arr[y][i])
+	{
+		if (v->arr[y][i] != '1')
+			return (0);
+		i++;
+	}
+	return (1);
+}
+
+static int	sides(t_validators *v)
+{
+	int	i;
+	int	y_lim;
+	int	x_lim;
+
+	y_lim = v->y - 1;
+	x_lim = v->x - 1;
+	i = 1;
+	while (i < y_lim)
+	{
+		if (v->arr[i][0] != '1' || v->arr[i][x_lim] != '1')
+			return (0);
+		i++;
+	}
+	return (1);
+}
+
+void	ft_check_ones(t_validators *v)
+{
+	if (!top_and_bottom(v) || !sides(v))
+		v->error_mask |= OPENWAL_ER;
+}
+=== end of ./ones.c ===
+=== start of ./file.c ===
+
+#include "bonus_parse_lib.h"
+#include <fcntl.h>
+#include <unistd.h>
+
+static char	**bad_array(char **arr, int fd)
+{
+	int	i;
+
+	if (fd >= 0)
+		close(fd);
+	i = 0;
+	if (arr)
+	{
+		while (arr[i])
+		{
+			free(arr[i]);
+			i++;
+		}
+		free(arr);
+	}
+	return (NULL);
+}
+
+static int	map_row_size(char *file)
+{
+	int		fd;
+	int		rows;
+	char	buf;
+
+	fd = open(file, O_RDONLY);
+	if (fd < 0)
+		return (-1);
+	rows = 1;
+	while (read(fd, &buf, 1) > 0)
+	{
+		if (buf == '\n')
+			rows++;
+	}
+	close(fd);
+	return (rows);
+}
+
+static char	**return_map(int fd, char **map, int size)
+{
+	int		i;
+	char	*temp;
+
+	temp = get_next_line(fd);
+	i = 0;
+	while (i < size && temp)
+	{
+		map[i] = ft_strtrim(temp, "\n");
+		if (!map[i])
+			return (bad_array(map, fd));
+		if (temp)
+			free(temp);
+		temp = get_next_line(fd);
+		i++;
+	}
+	close(fd);
+	return (map);
+}
+
+static char	**load_map(char *file)
+{
+	int		fd;
+	int		n;
+	char	**map;
+
+	n = map_row_size(file);
+	if (n <= 0)
+		return (NULL);
+	map = ft_calloc(n, sizeof(char *));
+	if (!map)
+		return (NULL);
+	fd = open(file, O_RDONLY);
+	if (fd < 0)
+		return (bad_array(map, fd));
+	return (return_map(fd, map, n));
+}
+
+void	ft_file_check(t_validators *v)
+{
+	int	i;
+
+	i = ft_strlen(v->map_file);
+	if (i < 4)
+		v->error_mask |= BERFILE_ER;
+	else
+	{
+		if (ft_strncmp(v->map_file + (i - 4), ".ber", 4))
+			v->error_mask |= BERFILE_ER;
+	}
+	if (!v->error_mask)
+		v->arr = load_map(v->map_file);
+	if (!v->arr)
+		v->error_mask |= MAPFILE_ER;
+}
+=== end of ./file.c ===
+=== start of ./move.c ===
+#include "bonus_parse_lib.h"
+#include <stdio.h>
+
+static void	kill_enemies(t_point **list, char **map, int move)
+{
+	char		cell;
+	t_point	*t;
+
+	t = *list;
+	while (t)
+	{
+		if (t->alive)
+		{
+			cell = map[t->y][t->x];
+			if ((cell == '2' && move % 2) || (cell == '3' && !(move % 2)))
+				t->alive = 0;
+		}
+		t = t->next;
+	}
+}
+
+static void	reset(t_point **list, char **map)
+{
+	t_point	*t;
+
+	t = *list;
+	while (t)
+	{
+		t->x = t->og_x;
+		t->y = t->og_y;
+		t->dir = 0;
+		t->alive = 1;
+		t = t->next;
+	}
+}
+
+static void move_enemy(t_point *t, char **map)
+{
+		int n_x;
+    int n_y;
+		int	moved;
+    static int dx[4] = {0, -1, 0, 1};
+    static int dy[4] = {1, 0, -1, 0};
+
+		n_x = t->x + dx[t->dir];
+		n_y = t->y + dy[t->dir];
+		moved = 0;
+		if (n_y >= 0 && map[n_y] && n_x >= 0 && map[n_y][n_x])
+    {
+			if (map[n_y][n_x] != '1' && map[n_y][n_x] != 'E')
+			{
+				t->y = n_y;
+				t->x = n_x;
+				moved = 1;
+			}
+    }
+		if (!moved)
+			t->dir = (t->dir + 1) % 4;
+}
+
+static void	step_enemies(t_point **list, char **map)
+{
+	t_point	*t;
+
+	t = *list;
+	while (t)
+	{
+		if (t->alive)
+			move_enemy(t, map);
+		t = t->next;
+	}
+}
+
+void	ft_move_enemies(t_point **list, char **arr, int move)
+{
+	static int	old_move;
+	
+	if (old_move == move)
+		return ;
+	while (old_move < move)
+	{
+		step_enemies(list, arr);
+		old_move++;
+		kill_enemies(list, arr, old_move);
+	}
+	if (old_move > move)
+	{
+		reset(list, arr);
+		old_move = 0;
+		ft_move_enemies(list, arr, move);
+	}
+}
+
+=== end of ./move.c ===
+=== start of ./flood.c ===
+
+#include "bonus_parse_lib.h"
+#include <stdlib.h>
+
+static void	coin_flood(int y, int x, t_validators *v, int m)
+{
+	if (x < 0 || y < 0 || x >= v->x || y >= v->y || v->coin_map[y][x] == '1' ||
+	v->coin_map[y][x] == 'F' || v->coin_map[y][x] == 'E')
+		return ;
+	if ((v->coin_map[y][x] == '2' && m % 2 != 0) ||
+		(v->coin_map[y][x] == '3' && m % 2 == 0) ||
+			ft_enemy_collision(y, x, m, v))
+		return ;
+	if (v->coin_map[y][x] == 'C')
+		v->coins -= 1;
+	v->coin_map[y][x] = 'F';
+	coin_flood(y - 1, x, v, m + 1);
+	coin_flood(y, x - 1, v, m + 1);
+	coin_flood(y + 1, x, v, m + 1);
+	coin_flood(y, x + 1, v, m + 1);
+}
+
+static int	exit_flood(int y, int x, t_validators *v, int m)
+{
+
+	if (x < 0 || y < 0 || x >= v->x || y >= v->y
+		|| v->exit_map[y][x] == '1' || v->exit_map[y][x] == 'F')
+		return (0);
+	if ((v->exit_map[y][x] == '2' && m % 2 != 0) ||
+		(v->exit_map[y][x] == '3' && m % 2 == 0) ||
+			ft_enemy_collision(y, x, m, v))
+		return (0);
+	if (v->exit_map[y][x] == 'E')
+		return (1);
+	v->exit_map[y][x] = 'F';
+	return (exit_flood(y - 1, x, v, m + 1) ||
+	exit_flood(y, x + 1, v, m + 1) ||
+	exit_flood(y + 1, x, v, m + 1) ||
+	exit_flood(y, x - 1, v, m + 1));
+}
+
+static char	**clean_arr(t_validators *v)
+{
+	int	i;
+
+	if (v->coin_map)
+	{
+		i = -1;
+		while (v->coin_map[++i])
+			free(v->coin_map[i]);
+		free(v->coin_map);
+		v->coin_map = NULL;
+	}
+	if (v->exit_map)
+	{
+		i = -1;
+		while (v->exit_map[++i])
+			free(v->exit_map[i]);
+		free(v->exit_map);
+		v->exit_map = NULL;
+	}
+	v->error_mask |= MALLOCS_ER;
+	return (NULL);
+}
+
+static char	**clone_arr(t_validators *v)
+{
+	int		i;
+	char	**new_arr;
+
+	new_arr = ft_calloc(v->y + 1, sizeof(char *));
+	if (!new_arr)
+		return (clean_arr(v));
+	i = 0;
+	while (v->arr[i])
+	{
+		new_arr[i] = ft_strdup(v->arr[i]);
+		if (!new_arr[i])
+			return (clean_arr(v));
+		i++;
+	}
+	return (new_arr);
+}
+
+void	ft_flood_map(t_validators *v)
+{
+	v->coin_map = clone_arr(v);
+	v->exit_map = clone_arr(v);
+	if (!v->coin_map || !v->exit_map)
+	{
+		clean_arr(v);
+		return ;
+	}
+	if (v->coin_map)
+		coin_flood(v->p_y, v->p_x, v, 0);
+	if (v->exit_map)
+		v->exit = exit_flood(v->p_y, v->p_x, v, 0);
+	if (v->coins)
+		v->error_mask |= LOCKOIN_ER;
+	if (!v->exit)
+		v->error_mask |= LOCKEXI_ER;
+}
+=== end of ./flood.c ===
+=== start of ./valids.c ===
+
+#include "bonus_parse_lib.h"
+#include "so_long_bonus.h"
+
+static int	translate_valids(char c)
+{
+	return (c == '0' || c == '1' || c == '2' || c == '3' ||
+		 c == 'P' || c == 'C' || c == 'E' ||
+		c == 'V' || c == 'H');
+}
+
+static int	check_symbols(char **map)
+{
+	int		y;
+	int		x;
+
+	y = 0;
+	while (map[y])
+	{
+		x = 0;
+		while (map[y][x])
+		{
+			if (!translate_valids(map[y][x]))
+				return (0);
+			x++;
+		}
+		y++;
+	}
+	return (1);
+}
+
+void	ft_valid_symbols(t_validators *v)
+{
+	if (!check_symbols(v->arr))
+		v->error_mask |= UNKNOWN_ER;
+}
+=== end of ./valids.c ===

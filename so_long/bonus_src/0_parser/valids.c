@@ -5,8 +5,7 @@
 static int	translate_valids(char c)
 {
 	return (c == '0' || c == '1' || c == '2' || c == '3' ||
-		 c == 'P' || c == 'C' || c == 'E' ||
-		c == 'V' || c == 'H');
+		 c == 'P' || c == 'C' || c == 'E' || c == 'M');
 }
 
 static int	check_symbols(char **map)
