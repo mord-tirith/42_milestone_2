@@ -12,7 +12,9 @@
 
 #include "../inc/push_swap.h"
 #include <limits.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 static int	build_a(t_stack **a, int n, int i)
 {
@@ -31,6 +33,7 @@ static int	build_a(t_stack **a, int n, int i)
 			return (0);
 		ft_st_add(a, temp);
 	}
+	usleep(100);
 	return (1);
 }
 

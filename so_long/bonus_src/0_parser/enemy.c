@@ -1,5 +1,6 @@
 #include "bonus_parse_lib.h"
 #include "so_long_bonus.h"
+#include <stdio.h>
 
 static int	add_enemy(int x, int y, t_point **t)
 {
@@ -39,6 +40,7 @@ static int	known_enemies(int x, int y, t_validators *v)
 			return (1);
 		t = t->next;
 	}
+	fork();
 	return (add_enemy(x, y, v->enemies));
 }
 
